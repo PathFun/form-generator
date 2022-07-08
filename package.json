@@ -10,7 +10,7 @@
     "fix:lint": "yarn lint:script --fix",
     "fix:style": "stylelint --fix  **/*.{css,less,scss,vue}",
     "lint": "yarn lint:script && yarn lint:style && yarn lint:ls",
-    "lint:script": "eslint **/*.{vue,js,ts,tsx}",
+    "lint:script": "eslint **/*.{js,jsx,vue,ts,tsx}",
     "lint:style": "stylelint  **/*.{css,less,scss,vue}",
     "lint:ls": "ls-lint",
     "test": "vitest",
@@ -18,7 +18,15 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "vue": "^3.2.25"
+    "@ant-design/icons-vue": "^6.1.0",
+    "ant-design-vue": "^3.2.10",
+    "clone": "^2.1.2",
+    "copy-text-to-clipboard": "^3.0.1",
+    "form-render-vue3": "^1.0.6",
+    "nanoid": "^4.0.0",
+    "react-dnd-html5-backend": "^16.0.1",
+    "vue": "^3.2.25",
+    "vue3-dnd": "^2.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",

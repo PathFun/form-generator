@@ -1,19 +1,21 @@
 <script setup>
-import { computed, ref } from 'vue';
-const props = defineProps({
-  count: {
-    type: Number,
-    default: 10
-  }
-});
-const times = ref(2);
-const result = computed(() => props.count * times.value);
-defineExpose(props);
+import Generator from './Generator';
+// import { computed, ref } from 'vue';
+// const props = defineProps({
+//   count: {
+//     type: Number,
+//     default: 10
+//   }
+// });
+// const times = ref(2);
+// const result = computed(() => props.count * times.value);
+// defineExpose(props);
 </script>
 
 <template>
-  <div>{{ count }} x {{ times }} = {{ result }}</div>
-  <button @click="times += 1">x1</button>
+  <!-- <div>{{ count }} x {{ times }} = {{ result }}</div>
+  <button @click="times += 1">x1</button> -->
+  <Generator />
 </template>
 
 <style lang="less">

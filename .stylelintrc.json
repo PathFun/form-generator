@@ -18,6 +18,11 @@
         "customSyntax": "postcss-scss"
       }
     ],
-    "ignoreFiles": ["node_modules/**/*", "dist/**/*", "**/*.js", "**/*.jsx", "**/*.tsx", "**/*.ts"]
+    "ignoreFiles": ["node_modules/**/*", "dist/**/*", "**/*.js", "**/*.jsx", "**/*.tsx", "**/*.ts"],
+    "rules": {
+      "selector-class-pattern": "^([a-z][a-z0-9]*)(-+[a-z0-9]+)*$",
+      "no-descending-specificity": null,
+      "function-url-quotes": null
+    }
   }
   
