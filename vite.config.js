@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
@@ -25,5 +27,13 @@ export default defineConfig({
         javascriptEnabled: true
       }
     }
+  },
+  define: {
+    'import.meta.vitest': 'undefined'
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['**/*/__tests__/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}']
   }
 });

@@ -3,15 +3,19 @@ module.exports = {
     browser: true,
     node: true,
     commonjs: true,
-    amd: true
+    amd: true,
+    es6: true
   },
   globals: {
     defineProps: 'readonly',
     defineEmits: 'readonly',
     defineExpose: 'readonly',
     withDefaults: 'readonly',
+    Promise: 'readonly',
     test: true,
-    expect: true
+    expect: true,
+    describe: true,
+    vi: true
   },
   extends: 'eslint:recommended',
   parser: 'vue-eslint-parser',
