@@ -170,8 +170,8 @@ export function isFunctionSchema(schema) {
 // }
 export function flattenSchema(schema, name = '#', parent, result = {}) {
   const _schema = deepClone(schema);
-  if (!_schema.$id) {
-    _schema.$id = name; // 给生成的schema添加一个唯一标识，方便从schema中直接读取
+  if (!_schema._id) {
+    _schema._id = name; // 给生成的schema添加一个唯一标识，方便从schema中直接读取
   }
   const children = [];
   const isObj = _schema.type === 'object' && _schema.properties;
@@ -214,16 +214,16 @@ export const changeKeyFromUniqueId = (uniqueId = '#', key = 'something') => {
 // final = true 用于最终的导出的输出
 // 几种特例：
 // 1. 删除时值删除了item，没有删除和parent的关联，也没有删除children，所以要在解析这步来兜住 (所有的解析都是)
-// 2. 修改$id的情况, 修改的是schema内的$id, 解析的时候要把schema.$id 作为真正的id (final = true的解析)
+// 2. 修改_id的情况, 修改的是schema内的_id, 解析的时候要把schema._id 作为真正的id (final = true的解析)
 export function idToSchema(flatten, id = '#', final = false) {
   let schema = {};
   const _item = flatten[id];
   const item = deepClone(_item);
   if (item) {
     schema = { ...item.schema };
-    // 最终输出去掉 $id
+    // 最终输出去掉 _id
     if (final) {
-      schema.$id && delete schema.$id;
+      schema._id && delete schema._id;
     }
     if (item.children.length > 0) {
       item.children.forEach(child => {
@@ -235,7 +235,7 @@ export function idToSchema(flatten, id = '#', final = false) {
         // 最终输出将所有的 key 值改了
         try {
           if (final) {
-            childId = flatten[child].schema.$id;
+            childId = flatten[child].schema._id;
           }
         } catch (error) {
           console.error(error, 'catch');
@@ -266,20 +266,20 @@ export function idToSchema(flatten, id = '#', final = false) {
   return schema;
 }
 
-export const copyItem = (flatten, $id, getId) => {
+export const copyItem = (flatten, _id, getId) => {
   let newFlatten = { ...flatten };
   try {
-    const item = flatten[$id];
-    const newId = getId($id);
+    const item = flatten[_id];
+    const newId = getId(_id);
     const siblings = newFlatten[item.parent].children;
-    const idx = siblings.findIndex(x => x === $id);
+    const idx = siblings.findIndex(x => x === _id);
     siblings.splice(idx + 1, 0, newId);
-    newFlatten[newId] = deepClone(newFlatten[$id]);
-    newFlatten[newId].schema.$id = newId;
+    newFlatten[newId] = deepClone(newFlatten[_id]);
+    newFlatten[newId].schema._id = newId;
     return [newFlatten, newId];
   } catch (error) {
     console.error(error, 'catcherror');
-    return [flatten, $id];
+    return [flatten, _id];
   }
 };
 
@@ -305,7 +305,7 @@ export const addItem = ({ selected, name, schema, flatten, fixedName, getId }) =
       siblings.push(newId);
       const newItem = {
         parent: oldId,
-        schema: { ...schema, $id: newId },
+        schema: { ...schema, _id: newId },
         data: undefined,
         children: []
       };
@@ -328,7 +328,7 @@ export const addItem = ({ selected, name, schema, flatten, fixedName, getId }) =
     siblings.splice(idx + 1, 0, newId);
     const newItem = {
       parent: item.parent,
-      schema: { ...schema, $id: newId },
+      schema: { ...schema, _id: newId },
       data: undefined,
       children: []
     };
@@ -362,7 +362,7 @@ export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
 
   let newId = dragId;
   try {
-    const newParentId = dropParent.schema.$id;
+    const newParentId = dropParent.schema._id;
     newId = newId.replace(_dragItem.parent, newParentId);
   } catch (error) {
     console.warn(error);
@@ -399,7 +399,7 @@ export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
     console.error(error);
   }
 
-  _dragItem.parent = dropParent.$id;
+  _dragItem.parent = dropParent._id;
   return [newFlatten, newId];
 };
 
@@ -580,18 +580,16 @@ export const newSchemaToOld = setting => {
 };
 
 export const schemaToState = value => {
-  const schema = oldSchemaToNew(value);
+  const schema = value;
   const frProps = Object.keys(schema).reduce((rst, cur) => {
     if (['type', 'properties'].includes(cur)) return rst;
     return { ...rst, [cur]: schema[cur] };
   }, {});
-  const isNewVersion = !(value && value.propsSchema);
 
   return {
     schema,
     frProps,
-    formData: schema.formData || {},
-    isNewVersion
+    formData: schema.formData || {}
   };
 };
 

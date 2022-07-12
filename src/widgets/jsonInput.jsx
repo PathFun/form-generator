@@ -1,5 +1,4 @@
-import { Input } from 'antd';
-import React from 'react';
+import { Input } from 'ant-design-vue';
 
 export default function jsonInput({ onChange, value, disabled, readonly, options }) {
   const handleChange = e => {

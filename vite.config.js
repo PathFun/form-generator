@@ -7,6 +7,8 @@ import eslintPlugin from 'vite-plugin-eslint';
 import { resolve } from 'path';
 import lessCopy from './plugins/less-copy.js';
 const { name } = require('./package.json');
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
+import Components from 'unplugin-vue-components/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,6 +19,15 @@ export default defineConfig({
     eslintPlugin({
       include: ['src/**/*.js', 'src/**/*.vue']
     })
+    // Components({
+    //   resolvers: [
+    //     AntDesignVueResolver({
+    //       importStyle: 'less',
+    //       resolveIcons: true
+    //     })
+    //   ],
+    //   include: [/\.vue$/, /\.jsx$/]
+    // })
   ],
   build: {
     lib: {

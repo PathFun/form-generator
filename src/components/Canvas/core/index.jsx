@@ -1,34 +1,45 @@
 import FormRender, { useForm } from 'form-render-vue3';
-import React, { useEffect } from 'react';
 import { dataToFlatten, flattenToData } from '../../../utils';
 import { useStore } from '../../../utils/context';
 import RenderChildren from './RenderChildren';
 import RenderField from './RenderField';
 import Wrapper from './Wrapper';
+import { defineComponent } from 'vue';
 
-const PreviewFR = ({ schema, data }) => {
-  const form = useForm();
-  const { flatten, widgets, mapping, userProps, onFlattenChange } = useStore();
-  const renderSchema = userProps.transformer.to(schema);
+const PreviewFR = defineComponent({
+  props: {
+    schema: {
+      type: Object
+    },
+    data: {
+      type: Object
+    }
+  },
+  setup(props) {
+    const form = useForm({
+      removeHiddenData: false
+    });
+    const { flatten, widgets, mapping, userProps, onFlattenChange } = useStore();
+    form.setValues(props.data);
 
-  useEffect(() => {
-    form.setValues(data);
-  }, []);
-
-  return (
-    <FormRender
-      schema={renderSchema}
-      form={form}
-      widgets={widgets}
-      mapping={mapping}
-      watch={{
-        '#': formData => {
-          onFlattenChange(dataToFlatten(flatten, formData), 'data');
-        }
-      }}
-    />
-  );
-};
+    return () => {
+      const renderSchema = userProps.transformer.to(props.schema);
+      return (
+        <FormRender
+          schema={renderSchema}
+          form={form}
+          widgets={widgets}
+          mapping={mapping}
+          watch={{
+            '#': formData => {
+              onFlattenChange(dataToFlatten(flatten, formData), 'data');
+            }
+          }}
+        />
+      );
+    };
+  }
+});
 
 const FR = ({ id = '#', preview, displaySchema }) => {
   const { flatten, frProps = {} } = useStore();
@@ -64,7 +75,6 @@ const FR = ({ id = '#', preview, displaySchema }) => {
       paddingRight: '12px'
     };
   }
-
   switch (schema.type) {
     case 'object':
       if (schema.title) {
@@ -111,7 +121,7 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   }
 
   const fieldProps = {
-    $id: id,
+    _id: id,
     item,
     labelClass,
     contentClass,
@@ -120,7 +130,7 @@ const FR = ({ id = '#', preview, displaySchema }) => {
 
   const childrenElement =
     item.children && item.children.length > 0 ? (
-      <ul className={`flex flex-wrap pl0`}>
+      <ul class={`flex flex-wrap pl0`}>
         <RenderChildren children={item.children} />
       </ul>
     ) : null;
@@ -128,8 +138,8 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   const isEmpty = Object.keys(flatten).length < 2; // 只有一个根元素 # 的情况
   if (isEmpty) {
     return (
-      <Wrapper style={columnStyle} $id={id} item={item}>
-        <div className={`${containerClass} h-100 f4 black-40 flex items-center justify-center`}>
+      <Wrapper style={columnStyle} _id={id} item={item}>
+        <div class={`${containerClass} h-100 f4 black-40 flex items-center justify-center`}>
           点击/拖拽左侧栏的组件进行添加
         </div>
       </Wrapper>
@@ -137,12 +147,12 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   }
 
   return (
-    <Wrapper style={columnStyle} $id={id} item={item}>
-      <div className={containerClass}>
+    <Wrapper style={columnStyle} _id={id} item={item}>
+      <div class={containerClass}>
         <RenderField {...fieldProps}>
           {(isObj || isList) && (
-            <Wrapper $id={id} item={item} inside>
-              {childrenElement || <div className="h2" />}
+            <Wrapper _id={id} item={item} inside>
+              {childrenElement || <div class="h2" />}
             </Wrapper>
           )}
         </RenderField>

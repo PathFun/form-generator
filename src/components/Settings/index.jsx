@@ -1,5 +1,5 @@
-import { RightOutlined } from '@ant-design/icons';
-import { Tabs } from 'antd';
+import { RightOutlined } from '@ant-design/icons-vue';
+import { Tabs } from 'ant-design-vue';
 import { defineComponent, reactive, watch } from 'vue';
 import { useStore } from '../../utils/context';
 import GlobalSettings from './GlobalSettings';
@@ -25,16 +25,16 @@ const Settings = defineComponent({
 
     const ToggleIcon = () => (
       <div
-        className="absolute top-0 left-0 pointer"
+        class="absolute top-0 left-0 pointer"
         style={{ height: 30, width: 30, padding: '8px 0 0 8px' }}
         onClick={toggleRight}
       >
-        <RightOutlined className="f5" />
+        <RightOutlined class="f5" />
       </div>
     );
 
     const HideRightArrow = () => (
-      <div className="absolute right-0 top-0 h2 flex-center" style={{ width: 40, transform: 'rotate(180deg)' }}>
+      <div class="absolute right-0 top-0 h2 flex-center" style={{ width: 40, transform: 'rotate(180deg)' }}>
         <ToggleIcon />
       </div>
     );
@@ -56,7 +56,7 @@ const Settings = defineComponent({
 
     return () => {
       return showRight ? (
-        <div className="right-layout relative pl2">
+        <div class="right-layout relative pl2">
           <ToggleIcon />
           <Tabs activeKey={tabsKey} onChange={key => Object.assign(state, { tabsKey: key })}>
             {showItemSettings && (

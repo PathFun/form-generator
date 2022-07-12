@@ -8,7 +8,9 @@ const GlobalSettings = defineComponent({
     widgets: Object
   },
   setup(props) {
-    const form = useForm();
+    const form = useForm({
+      removeHiddenData: false
+    });
     const innerUpdate = ref(false);
     const { widgets: globalWidgets, frProps, userProps = {}, mapping } = useStore();
     const setGlobal = useGlobal();

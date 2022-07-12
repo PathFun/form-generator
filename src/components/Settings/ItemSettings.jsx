@@ -94,7 +94,7 @@ const ItemSettings = defineComponent({
         const element = widgetList.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
         const properties = { ...element.setting };
 
-        if (hideId) delete properties.$id;
+        if (hideId) delete properties._id;
 
         setTimeout(() => {
           Object.assign(settingSchema, {

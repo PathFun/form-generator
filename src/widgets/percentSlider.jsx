@@ -1,5 +1,4 @@
-import { InputNumber, Slider } from 'antd';
-import React from 'react';
+import { InputNumber, Slider } from 'ant-design-vue';
 
 const PercentSlider = p => {
   const style = p.invalid ? { borderColor: '#f5222d' } : {};
@@ -55,7 +54,7 @@ const PercentSlider = p => {
   );
 
   return (
-    <div className="fr-slider">
+    <div class="fr-slider">
       <Slider
         style={{ flexGrow: 1, marginRight: hideNumber ? 0 : 12 }}
         {...setting}

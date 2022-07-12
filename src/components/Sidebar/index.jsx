@@ -1,6 +1,5 @@
-import React from 'react';
 import { defaultSettings } from '../../settings';
-import { useStore } from '../../utils/hooks';
+import { useStore } from '../../utils/context';
 import Element from './Element';
 import './index.less';
 
@@ -10,7 +9,7 @@ const Sidebar = props => {
   const _settings = Array.isArray(settings) ? settings : defaultSettings;
 
   return (
-    <div className="left-layout w5-l w4">
+    <div class="left-layout w5-l w4">
       {Array.isArray(_settings) ? (
         _settings.map((item, idx) => {
           if (item && item.show === false) {
@@ -18,8 +17,8 @@ const Sidebar = props => {
           }
           return (
             <div key={idx}>
-              <p className="f6 b">{item.title}</p>
-              <ul className="pl0">
+              <p class="f6 b">{item.title}</p>
+              <ul class="pl0">
                 {Array.isArray(item.widgets) ? (
                   item.widgets
                     .filter(item => item.show !== false)

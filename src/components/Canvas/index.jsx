@@ -1,6 +1,6 @@
 import { Button, Input, message, Modal } from 'ant-design-vue';
 import copyTOClipboard from 'copy-text-to-clipboard';
-import { defineComponent, reactive, watch } from 'vue';
+import { defineComponent, reactive, watch, watchEffect } from 'vue';
 import { idToSchema, isObject, looseJsonParse, schemaToState } from '../../utils';
 import { useGlobal, useStore } from '../../utils/context';
 import FR from './core';
@@ -89,11 +89,11 @@ const Canvas = defineComponent({
 
     return () => {
       return (
-        <div className="mid-layout pr2">
-          <div className="mv2 mh1">
+        <div class="mid-layout pr2">
+          <div class="mv2 mh1">
             {_showDefaultBtns[0] !== false && (
               <Button
-                className="mr2 mb1"
+                class="mr2 mb1"
                 onClick={() => {
                   Object.assign(local, { preview: !preview });
                   setGlobal({ selected: '#' });
@@ -103,39 +103,39 @@ const Canvas = defineComponent({
               </Button>
             )}
             {_showDefaultBtns[1] !== false && (
-              <Button className="mr2" onClick={clearSchema}>
+              <Button class="mr2" onClick={clearSchema}>
                 {getDefaultBtnText(_showDefaultBtns[1], '清空')}
               </Button>
             )}
             {_showDefaultBtns[2] !== false && (
-              <Button className="mr2" onClick={toggleModal2}>
+              <Button class="mr2" onClick={toggleModal2}>
                 {getDefaultBtnText(_showDefaultBtns[2], '导入')}
               </Button>
             )}
             {_showDefaultBtns[3] !== false && (
-              <Button type="primary" className="mr2" onClick={toggleModal}>
+              <Button type="primary" class="mr2" onClick={toggleModal}>
                 {getDefaultBtnText(_showDefaultBtns[3], '导出schema')}
               </Button>
             )}
             {_extraBtns.map((item, idx) => {
               return (
-                <Button key={idx.toString()} className="mr2" {...item}>
+                <Button key={idx.toString()} class="mr2" {...item}>
                   {item.text || item.children}
                 </Button>
               );
             })}
           </div>
-          <div className={`dnd-container ${preview ? 'preview' : 'edit'}`}>
+          <div class={`dnd-container ${preview ? 'preview' : 'edit'}`}>
             <div style={{ height: preview ? 33 : 0 }}></div>
             <FR preview={preview} displaySchema={displaySchema} />
           </div>
           <Modal visible={local.showModal} onOk={copySchema} onCancel={toggleModal} okText="复制" cancelText="取消">
-            <div className="mt3">
+            <div class="mt3">
               <TextArea style={{ fontSize: 12 }} value={displaySchemaString} autoSize={{ minRows: 10, maxRows: 30 }} />
             </div>
           </Modal>
           <Modal visible={local.showModal2} okText="导入" cancelText="取消" onOk={importSchema} onCancel={toggleModal2}>
-            <div className="mt3">
+            <div class="mt3">
               <TextArea
                 style={{ fontSize: 12 }}
                 value={local.schemaForImport}

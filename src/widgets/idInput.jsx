@@ -1,5 +1,4 @@
-import { Input } from 'antd';
-import React from 'react';
+import { Input } from 'ant-design-vue';
 import { changeKeyFromUniqueId, getKeyFromUniqueId } from '../utils';
 
 export default function IdInput({ onChange, value, disabled, readonly, options }) {

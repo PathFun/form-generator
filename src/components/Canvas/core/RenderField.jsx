@@ -5,7 +5,7 @@ import { getWidgetName } from '../../../utils/mapping';
 
 const RenderField = defineComponent({
   props: {
-    $id: String,
+    _id: String,
     item: Object,
     labelClass: String,
     contentClass: String,
@@ -24,6 +24,7 @@ const RenderField = defineComponent({
         widgetName = customWidget;
       }
       let Widget = widgets[widgetName];
+      console.log(Widget);
       // 如果不存在，比如有外部的自定义组件名称，使用默认展示组件
       if (!Widget) {
         const defaultSchema = { ...schema };
@@ -32,7 +33,7 @@ const RenderField = defineComponent({
         Widget = widgets[widgetName] || 'input';
       }
       // 真正有效的label宽度需要从现在所在item开始一直往上回溯（设计成了继承关系），找到的第一个有值的 labelWidth
-      const effectiveLabelWidth = getParentProps('labelWidth', props.$id, flatten) || labelWidth;
+      const effectiveLabelWidth = getParentProps('labelWidth', props._id, flatten) || labelWidth;
       const _labelWidth = isLooselyNumber(effectiveLabelWidth)
         ? Number(effectiveLabelWidth)
         : isCssLength(effectiveLabelWidth)
@@ -53,7 +54,7 @@ const RenderField = defineComponent({
         } else {
           newItem.data = value;
         }
-        onItemChange(props.$id, newItem, 'data');
+        onItemChange(props._id, newItem, 'data');
       };
 
       let contentStyle = {};
@@ -76,28 +77,28 @@ const RenderField = defineComponent({
       const originNode = (
         <>
           {schema.title ? (
-            <div className={props.labelClass} style={labelStyle}>
+            <div class={props.labelClass} style={labelStyle}>
               <label
-                className={`fr-label-title ${widgetName === 'checkbox' || displayType === 'column' ? 'no-colon' : ''}`} // checkbox不带冒号
+                class={`fr-label-title ${widgetName === 'checkbox' || displayType === 'column' ? 'no-colon' : ''}`} // checkbox不带冒号
                 title={title}
               >
-                {required && <span className="fr-label-required"> *</span>}
-                <span className={`${props.isComplex ? 'b' : ''} ${displayType === 'column' ? 'flex-none' : ''}`}>
+                {required && <span class="fr-label-required"> *</span>}
+                <span class={`${props.isComplex ? 'b' : ''} ${displayType === 'column' ? 'flex-none' : ''}`}>
                   <span dangerouslySetInnerHTML={{ __html: title }} />
                 </span>
-                {description && <span className="fr-desc ml2">(&nbsp;{description}&nbsp;)</span>}
-                {displayType !== 'row' && showValidate && <span className="fr-validate">validation</span>}
+                {description && <span class="fr-desc ml2">(&nbsp;{description}&nbsp;)</span>}
+                {displayType !== 'row' && showValidate && <span class="fr-validate">validation</span>}
               </label>
             </div>
           ) : null}
-          <div className={props.contentClass} style={contentStyle}>
-            <Suspense fallback={<div></div>}>
+          <div class={props.contentClass} style={contentStyle}>
+            {/* <Suspense fallback={<div></div>}>
               <Widget {...usefulWidgetProps}>{props.children || null}</Widget>
-            </Suspense>
+            </Suspense> */}
+            <Widget {...usefulWidgetProps}>{slots.default ? slots.default() : null}</Widget>
           </div>
         </>
       );
-
       if (!fieldRender) return originNode;
       return fieldRender(schema, usefulWidgetProps, props.children, originNode);
     };

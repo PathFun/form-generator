@@ -1,7 +1,7 @@
 import { ConfigProvider } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/lib/locale/zh_CN';
 import copyTOClipboard from 'copy-text-to-clipboard';
-import { defineComponent, reactive, watch, ref, computed } from 'vue';
+import { defineComponent, reactive, watch } from 'vue';
 import { defaultMapping, defaultWidgets } from 'form-render-vue3';
 import { DndProvider } from 'vue3-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -40,7 +40,7 @@ const Provider = defineComponent({
       type: Function,
       default: defaultGetId
     },
-    settings: Object,
+    settings: Array,
     commonSettings: Object,
     globalSettings: Object,
     widgets: {
@@ -64,32 +64,12 @@ const Provider = defineComponent({
   setup(props, { expose, slots, emit }) {
     const state = reactive({
       formData: {},
-      frProps: {}, // form-render 的全局 props 等
-      isNewVersion: true, // 用schema字段，还是用propsSchema字段，这是一个问题
-      preview: false, // preview = false 是编辑模式
       schema: {},
-      selected: undefined, // 被选中的$id, 如果object/array的内部，以首字母0标识
+      frProps: {},
+      preview: false,
+      selected: undefined,
       settingsForm: null
     });
-
-    const _transformer = {
-      from: schema => schema,
-      to: schema => schema,
-      fromSetting,
-      toSetting,
-      ...props.transformer
-    };
-
-    const errorFields = ref([]);
-
-    // 收口点 propsSchema 到 schema 的转换 (一共3处，其他两个是 importSchema 和 setValue，在 FRWrapper 文件)
-    watch(
-      () => props.defaultValue,
-      newValue => {
-        const schema = newValue ? _transformer.from(newValue) : DEFAULT_SCHEMA;
-        if (schema) Object.assign(state, { ...schemaToState(schema) });
-      }
-    );
 
     const onChange = data => {
       Object.assign(state, { formData: data });
@@ -102,39 +82,6 @@ const Provider = defineComponent({
         emit('schemaChange', getValue());
       }, 0);
     };
-
-    const _schema = computed(() => {
-      let displaySchema = {};
-      let displaySchemaString = '';
-      try {
-        const _schema = {
-          ...idToSchema(flattenWithData, '#', true),
-          ...state.frProps
-        };
-        displaySchema = _transformer.to(_schema);
-        displaySchemaString = JSON.stringify(displaySchema, null, 2);
-      } catch (error) {
-        console.log(error);
-      }
-      return {
-        displaySchema,
-        displaySchemaString
-      };
-    });
-
-    const flatten = reactive({});
-    const flattenWithData = reactive({});
-
-    watch([() => state.schema, () => state.formData], (newValue, newFormData) => {
-      let _schema = {};
-      if (state.schema) {
-        _schema = combineSchema(newValue);
-      }
-      Object.assign(flatten, { ...flattenSchema(_schema) });
-      Object.assign(flattenWithData, {
-        ..._transformer.from(dataToFlatten(flatten, newFormData))
-      });
-    });
 
     const onFlattenChange = (newFlatten, changeSource = 'schema') => {
       const newSchema = idToSchema(newFlatten);
@@ -149,14 +96,13 @@ const Provider = defineComponent({
 
     const onItemChange = (key, value, changeSource) => {
       Object.assign(flattenWithData, { [key]: value });
+      Object.assign(store, {
+        flatten: flattenWithData
+      });
       onFlattenChange(flattenWithData, changeSource);
     };
 
-    const onSubmit = value => {
-      emit('submit', value);
-    };
-
-    const getValue = () => _schema.value.displaySchema;
+    const getValue = () => store.displaySchema;
 
     const setValue = value => {
       try {
@@ -165,82 +111,127 @@ const Provider = defineComponent({
           selected: undefined,
           ...schemaToState(_transformer.from(value))
         });
+        Object.assign(store, {
+          frProps: state.frProps,
+          preview: state.preview,
+          selected: state.selected
+        });
       } catch (error) {
         console.error(error);
       }
     };
 
     const copyValue = () => {
-      copyTOClipboard(_schema.value.displaySchemaString);
+      copyTOClipboard(store.displaySchemaString);
     };
 
-    const getErrorFields = () => errorFields.value;
+    const getErrorFields = () => store.errorFields;
 
-    const setErrorFields = newErrorFields => (errorFields.value = newErrorFields);
+    const setErrorFields = newErrorFields => Object.assign(store, { errorFields: newErrorFields });
 
     const getSettingsForm = () => state.settingsForm;
 
-    const initStore = () => {
-      const {
-        mapping,
-        widgets,
-        canDrag,
-        canDelete,
-        transformer,
-        extraButtons,
-        controlButtons,
-        hideId,
-        getId,
-        validation,
-        settings,
-        commonSettings,
-        globalSettings
-      } = props;
-      const _mapping = { ...defaultMapping, ...mapping };
-      const _widgets = { ...defaultWidgets, ...widgets, list };
-
-      const userProps = {
-        canDrag,
-        canDelete,
-        submit: onSubmit,
-        transformer,
-        extraButtons,
-        controlButtons,
-        hideId,
-        getId,
-        validation,
-        settings,
-        commonSettings,
-        globalSettings
-      };
-
-      const { displaySchema, displaySchemaString } = _schema.value;
-
-      // TODO: flatten是频繁在变的，应该和其他两个函数分开
-      const store = reactive({
-        flatten: flattenWithData, // schema + formData = flattenWithData
-        onFlattenChange, // onChange + onSchemaChange = onFlattenChange
-        onItemChange, // onFlattenChange 里只改一个item的flatten，使用这个方法
-        onSchemaChange,
-        onChange,
-        errorFields,
-        onItemErrorChange: setErrorFields,
-        userProps,
-        frProps: state.frProps,
-        displaySchema,
-        displaySchemaString,
-        fieldRender: slots.fieldRender,
-        fieldWrapperRender: slots.fieldWrapperRender,
-        elementRender: slots.elementRender,
-        preview: props.preview,
-        mapping: _mapping,
-        widgets: _widgets,
-        selected: props.selected
-      });
-
-      Ctx(value => Object.assign(state, value));
-      StoreCtx(store);
+    const userProps = {
+      canDrag: props.canDrag,
+      canDelete: props.canDelete,
+      submit: emit('submit'),
+      transformer: props.transformer,
+      extraButtons: props.extraButtons,
+      controlButtons: props.controlButtons,
+      hideId: props.hideId,
+      getId: props.getId,
+      validation: props.validation,
+      settings: props.settings,
+      commonSettings: props.commonSettings,
+      globalSettings: props.globalSettings
     };
+
+    const store = reactive({
+      flatten: {}, // schema + formData = flattenWithData
+      onFlattenChange, // onChange + onSchemaChange = onFlattenChange
+      onItemChange, // onFlattenChange 里只改一个item的flatten，使用这个方法
+      onSchemaChange,
+      onChange,
+      errorFields: [],
+      onItemErrorChange: setErrorFields,
+      userProps,
+      frProps: {},
+      displaySchema: {},
+      displaySchemaString: '',
+      fieldRender: slots.fieldRender,
+      fieldWrapperRender: slots.fieldWrapperRender,
+      elementRender: slots.elementRender,
+      preview: false,
+      mapping: { ...defaultMapping, ...props.mapping },
+      widgets: { ...defaultWidgets, ...props.widgets, list },
+      selected: undefined
+    });
+
+    Ctx(value => Object.assign(store, { ...value }));
+    StoreCtx(store);
+
+    const _transformer = {
+      from: schema => schema,
+      to: schema => schema,
+      fromSetting,
+      toSetting,
+      ...props.transformer
+    };
+
+    watch(
+      () => props.defaultValue,
+      newValue => {
+        const _schema = newValue ? _transformer.from(newValue) : DEFAULT_SCHEMA;
+        if (_schema) {
+          const newState = schemaToState(_schema);
+          Object.assign(state, newState);
+          Object.assign(store, { frProps: newState.frProps });
+        }
+      },
+      {
+        immediate: true
+      }
+    );
+
+    const flatten = {};
+    const flattenWithData = {};
+
+    watch(
+      [() => state.schema, () => state.formData],
+      ([newSchema, newFormData]) => {
+        let _schema = {};
+        if (newSchema) {
+          _schema = combineSchema(newSchema);
+        }
+
+        Object.assign(flatten, { ...flattenSchema(_schema) });
+        Object.assign(flattenWithData, {
+          ..._transformer.from(dataToFlatten(flatten, newFormData))
+        });
+
+        let displaySchema = {};
+        let displaySchemaString = '';
+        try {
+          const schema = {
+            ...idToSchema(flattenWithData, '#', true),
+            ...state.frProps
+          };
+          displaySchema = _transformer.to(schema);
+          displaySchemaString = JSON.stringify(displaySchema, null, 2);
+        } catch (error) {
+          console.log(error);
+        }
+
+        Object.assign(store, {
+          flatten: flattenWithData,
+          displaySchema,
+          displaySchemaString
+        });
+      },
+      {
+        immediate: true
+      }
+    );
 
     expose({
       getValue,
@@ -249,8 +240,6 @@ const Provider = defineComponent({
       getErrorFields,
       getSettingsForm
     });
-
-    initStore();
 
     return () => {
       return (

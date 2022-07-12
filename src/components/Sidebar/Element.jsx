@@ -1,55 +1,63 @@
-import { useDrag } from 'react-dnd';
+import { defineComponent } from 'vue';
+import { useDrag } from 'vue3-dnd';
 import { addItem } from '../../utils';
 import { useGlobal, useStore } from '../../utils/context';
 import './Element.less';
 
-const Element = ({ text, name, schema, icon, fixedName }) => {
-  const setGlobal = useGlobal();
-  const { selected, flatten, errorFields, userProps, onFlattenChange, elementRender } = useStore();
-  const { getId } = userProps;
-  const [{ isDragging }, dragRef] = useDrag({
-    type: 'box',
-    item: {
-      dragItem: {
-        parent: '#',
-        schema,
-        children: []
+const Element = defineComponent({
+  props: ['text', 'name', 'schema', 'icon', 'fixedName'],
+  setup(props) {
+    const setGlobal = useGlobal();
+    const { selected, flatten, errorFields, userProps, onFlattenChange, elementRender } = useStore();
+    const { getId } = userProps;
+
+    const [{ isDragging }, dragRef] = useDrag({
+      type: 'box',
+      item: {
+        dragItem: {
+          parent: '#',
+          schema: props.schema,
+          children: []
+        },
+        _id: props.fixedName ? `#/${props.name}` : `#/${getId(props.name)}`
       },
-      $id: fixedName ? `#/${name}` : `#/${getId(name)}`
-    },
-    collect: monitor => ({
-      isDragging: monitor.isDragging()
-    })
-  });
-
-  const handleElementClick = async () => {
-    if (errorFields?.length) return;
-    if (selected && !flatten[selected]) {
-      setGlobal({ selected: '#' });
-      return;
-    }
-    const { newId, newFlatten } = addItem({
-      selected,
-      name,
-      schema,
-      flatten,
-      fixedName,
-      getId
+      collect: monitor => ({
+        isDragging: monitor.isDragging()
+      })
     });
-    onFlattenChange(newFlatten);
-    setGlobal({ selected: newId });
-  };
 
-  const widgetProps = {
-    text,
-    icon,
-    onClick: handleElementClick
-  };
+    const handleElementClick = async () => {
+      if (errorFields?.length) return;
+      if (selected && !flatten[selected]) {
+        setGlobal({ selected: '#' });
+        return;
+      }
+      const { newId, newFlatten } = addItem({
+        selected,
+        name: props.name,
+        schema: props.schema,
+        flatten,
+        fixedName: props.fixedName,
+        getId
+      });
+      onFlattenChange(newFlatten);
+      setGlobal({ selected: newId });
+    };
 
-  const originNode = <WidgetUI {...widgetProps} />;
+    return () => {
+      const widgetProps = {
+        text: props.text,
+        icon: props.icon,
+        onClick: handleElementClick
+      };
 
-  return <div ref={dragRef}>{elementRender ? elementRender(schema, widgetProps, originNode) : originNode}</div>;
-};
+      const originNode = <WidgetUI {...widgetProps} />;
+      return (
+        <div ref={dragRef}>{elementRender ? elementRender(props.schema, widgetProps, originNode) : originNode}</div>
+      );
+    };
+  }
+});
 
 export default Element;
 
