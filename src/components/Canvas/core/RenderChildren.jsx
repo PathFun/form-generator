@@ -1,16 +1,15 @@
 import FR from './index';
 
-const RenderChildren = ({ preview }, { slots }) => {
+const RenderChildren = ({ preview, _children }) => {
   return (
     <>
-      {slots.default &&
-        slots.default().map((child, i) => {
-          const FRProps = {
-            id: child,
-            preview
-          };
-          return <FR key={i.toString()} {...FRProps} />;
-        })}
+      {_children.map((child, i) => {
+        const FRProps = {
+          id: child,
+          preview
+        };
+        return <FR key={i.toString()} {...FRProps} />;
+      })}
     </>
   );
 };

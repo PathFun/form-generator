@@ -12,10 +12,22 @@ const RenderField = defineComponent({
     isComplex: Boolean
   },
   setup(props, { slots }) {
+    const { onItemChange, flatten, widgets, mapping, frProps = {}, fieldRender } = useStore();
+    const { labelWidth, displayType, showValidate } = frProps;
+
+    const onChange = value => {
+      const { item, _id } = props;
+      const newItem = { ...item };
+      if (item.schema.type === 'boolean' && item.schema.widget === 'checkbox') {
+        newItem.data = !value;
+      } else {
+        newItem.data = value;
+      }
+      onItemChange(_id, newItem, 'data');
+    };
+
     return () => {
       const { schema, data } = props.item;
-      const { onItemChange, flatten, widgets, mapping, frProps = {}, fieldRender } = useStore();
-      const { labelWidth, displayType, showValidate } = frProps;
       const { title, description, required } = schema;
 
       let widgetName = getWidgetName(schema, mapping);
@@ -23,39 +35,26 @@ const RenderField = defineComponent({
       if (customWidget && widgets[customWidget]) {
         widgetName = customWidget;
       }
+
       let Widget = widgets[widgetName];
-      console.log(Widget);
-      // 如果不存在，比如有外部的自定义组件名称，使用默认展示组件
       if (!Widget) {
         const defaultSchema = { ...schema };
         delete defaultSchema['widget'];
         widgetName = getWidgetName(defaultSchema, mapping);
         Widget = widgets[widgetName] || 'input';
       }
-      // 真正有效的label宽度需要从现在所在item开始一直往上回溯（设计成了继承关系），找到的第一个有值的 labelWidth
+
       const effectiveLabelWidth = getParentProps('labelWidth', props._id, flatten) || labelWidth;
       const _labelWidth = isLooselyNumber(effectiveLabelWidth)
         ? Number(effectiveLabelWidth)
         : isCssLength(effectiveLabelWidth)
         ? effectiveLabelWidth
-        : 110; // 默认是 110px 的长度
+        : '110'; // 默认是 110px 的长度
 
-      let labelStyle = { width: _labelWidth };
-      if (widgetName === 'checkbox') {
-        labelStyle = { flexGrow: 1 };
-      } else if (props.isComplex || displayType === 'column') {
+      let labelStyle = { width: _labelWidth + 'px' };
+      if (widgetName === 'checkbox' || props.isComplex || displayType === 'column') {
         labelStyle = { flexGrow: 1 };
       }
-
-      const onChange = value => {
-        const newItem = { ...props.item };
-        if (props.item.schema.type === 'boolean' && props.item.schema.widget === 'checkbox') {
-          newItem.data = !value;
-        } else {
-          newItem.data = value;
-        }
-        onItemChange(props._id, newItem, 'data');
-      };
 
       let contentStyle = {};
       if (widgetName === 'checkbox' && displayType === 'row') {
@@ -74,6 +73,7 @@ const RenderField = defineComponent({
         schema,
         ...schema['props']
       });
+
       const originNode = (
         <>
           {schema.title ? (
@@ -84,7 +84,7 @@ const RenderField = defineComponent({
               >
                 {required && <span class="fr-label-required"> *</span>}
                 <span class={`${props.isComplex ? 'b' : ''} ${displayType === 'column' ? 'flex-none' : ''}`}>
-                  <span dangerouslySetInnerHTML={{ __html: title }} />
+                  <span innerHTML={title} />
                 </span>
                 {description && <span class="fr-desc ml2">(&nbsp;{description}&nbsp;)</span>}
                 {displayType !== 'row' && showValidate && <span class="fr-validate">validation</span>}
@@ -92,9 +92,6 @@ const RenderField = defineComponent({
             </div>
           ) : null}
           <div class={props.contentClass} style={contentStyle}>
-            {/* <Suspense fallback={<div></div>}>
-              <Widget {...usefulWidgetProps}>{props.children || null}</Widget>
-            </Suspense> */}
             <Widget {...usefulWidgetProps}>{slots.default ? slots.default() : null}</Widget>
           </div>
         </>

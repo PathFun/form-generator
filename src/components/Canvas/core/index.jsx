@@ -54,7 +54,7 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   if (!item) return null;
 
   const { schema } = item;
-  const displayType = schema.displayType || frProps.displayType;
+  const displayType = schema.displayType || frProps.displayType || 'row';
   const isObj = schema.type === 'object';
   const isList = schema.type === 'array' && schema.enum === undefined && !!schema.items;
   const isComplex = isObj || isList;
@@ -131,7 +131,7 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   const childrenElement =
     item.children && item.children.length > 0 ? (
       <ul class={`flex flex-wrap pl0`}>
-        <RenderChildren children={item.children} />
+        <RenderChildren _children={item.children} />
       </ul>
     ) : null;
 

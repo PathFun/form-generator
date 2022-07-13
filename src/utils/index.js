@@ -624,12 +624,11 @@ export const transformProps = props => {
     controlProps.onChange = _onChange;
   }
 
-  // TODO: 之后 ui:xx 会舍去
   const usefulPropsFromSchema = {
-    disabled: schema.disabled || schema['ui:disabled'],
-    readOnly: schema.readOnly || schema['ui:readonly']
-    // hidden: schema.hidden || schema['ui:hidden'],
-    // $options: schema.options || schema['ui:options'],
+    disabled: schema.disabled,
+    readOnly: schema.readOnly
+    // hidden: schema.hidden,
+    // $options: schema.options,
   };
 
   const _props = {
