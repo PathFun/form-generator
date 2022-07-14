@@ -22,7 +22,7 @@
     "ant-design-vue": "^3.2.10",
     "clone": "^2.1.2",
     "copy-text-to-clipboard": "^3.0.1",
-    "form-render-vue3": "^1.0.6",
+    "form-render-vue3": "^1.0.8",
     "nanoid": "^4.0.0",
     "react-dnd-html5-backend": "^16.0.1",
     "vue": "^3.2.25",

@@ -11,7 +11,7 @@ const Canvas = defineComponent({
   emits: ['select'],
   setup(props, { emit }) {
     const setGlobal = useGlobal();
-    const { userProps, displaySchema, displaySchemaString, selected, flatten, onChange, onSchemaChange } = useStore();
+    const store = useStore();
 
     const local = reactive({
       preview: false,
@@ -20,9 +20,7 @@ const Canvas = defineComponent({
       schemaForImport: ''
     });
 
-    const { preview } = local;
-
-    const { transformer, extraButtons = [] } = userProps;
+    const { transformer, extraButtons = [] } = store.userProps;
 
     const toggleModal = () => Object.assign(local, { showModal: !local.showModal });
     const toggleModal2 = () => Object.assign(local, { showModal2: !local.showModal2 });
@@ -32,6 +30,7 @@ const Canvas = defineComponent({
     };
 
     const importSchema = () => {
+      const { onChange, onSchemaChange } = store;
       try {
         const value = transformer.from(looseJsonParse(local.schemaForImport));
         setGlobal(() => ({
@@ -48,12 +47,13 @@ const Canvas = defineComponent({
     };
 
     const copySchema = () => {
-      copyTOClipboard(displaySchemaString);
+      copyTOClipboard(store.displaySchemaString);
       message.info('复制成功');
       toggleModal();
     };
 
     const clearSchema = () => {
+      const { onChange, onSchemaChange } = store;
       const schema = {
         type: 'object',
         properties: {}
@@ -68,9 +68,9 @@ const Canvas = defineComponent({
     };
 
     watch(
-      () => selected,
+      () => store.selected,
       newVal => {
-        emit('select', idToSchema(flatten, newVal));
+        emit('select', idToSchema(store.flatten, newVal));
       }
     );
 
@@ -88,6 +88,8 @@ const Canvas = defineComponent({
     };
 
     return () => {
+      const { preview } = local;
+      const { displaySchema, displaySchemaString, selected } = store;
       return (
         <div class="mid-layout pr2">
           <div class="mv2 mh1">

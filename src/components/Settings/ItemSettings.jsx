@@ -20,22 +20,12 @@ const ItemSettings = defineComponent({
   setup(props) {
     const setGlobal = useGlobal();
     const form = useForm();
-    const {
-      selected,
-      flatten,
-      onItemChange,
-      onItemErrorChange,
-      userProps = {},
-      widgets: globalWidgets,
-      mapping: globalMapping
-    } = useStore();
-
-    const { settings, commonSettings, hideId, validation, transformer } = userProps;
-
-    const settingSchema = reactive({});
+    const store = useStore();
+    const { settings, commonSettings, hideId, validation, transformer } = store.userProps;
+    let settingSchema = reactive({});
 
     const _widgets = {
-      ...globalWidgets,
+      ...store.widgets,
       ...frgWidgets
     };
 
@@ -52,7 +42,7 @@ const ItemSettings = defineComponent({
           }
           return {
             ...item,
-            widget: item.widget || item.schema.widget || getWidgetName(item.schema, globalMapping),
+            widget: item.widget || item.schema.widget || getWidgetName(item.schema, store.mapping),
             setting: mergeInOrder(baseCommonSettings, commonSettings, baseItemSettings, item.setting)
           };
         });
@@ -61,6 +51,7 @@ const ItemSettings = defineComponent({
     };
 
     const onDataChange = value => {
+      const { selected, flatten, onItemChange } = store;
       try {
         const item = flatten[selected];
         if (!item || selected === '#') return;
@@ -79,41 +70,46 @@ const ItemSettings = defineComponent({
       }
     };
 
-    watch(selected, newValue => {
-      // setting 该显示什么的计算，要把选中组件的 schema 和它对应的 widgets 的整体 schema 进行拼接
-      try {
-        const item = flatten[newValue];
-        if (!item || newValue === '#') return;
-        // 算 widgetList
-        const _settings = Array.isArray(settings)
-          ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }] // TODO: 不是最优解
-          : defaultSettings;
-        const _commonSettings = isObject(commonSettings) ? commonSettings : defaultCommonSettings;
-        const widgetList = getWidgetList(_settings, _commonSettings);
-        const widgetName = getWidgetName(item.schema, globalMapping);
-        const element = widgetList.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
-        const properties = { ...element.setting };
-
-        if (hideId) delete properties._id;
-
-        setTimeout(() => {
-          Object.assign(settingSchema, {
+    watch(
+      () => store.selected,
+      newValue => {
+        const { flatten, mapping } = store;
+        // setting 该显示什么的计算，要把选中组件的 schema 和它对应的 widgets 的整体 schema 进行拼接
+        try {
+          const item = flatten[newValue];
+          if (!item || newValue === '#') return;
+          // 算 widgetList
+          const _settings = Array.isArray(settings)
+            ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }] // TODO: 不是最优解
+            : defaultSettings;
+          const _commonSettings = isObject(commonSettings) ? commonSettings : defaultCommonSettings;
+          const widgetList = getWidgetList(_settings, _commonSettings);
+          const widgetName = getWidgetName(item.schema, mapping);
+          const element = widgetList.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
+          const properties = { ...element.setting };
+          if (hideId) delete properties._id;
+          settingSchema = {
             type: 'object',
             displayType: 'column',
             properties
-          });
+          };
           const value = transformer.toSetting(item.schema);
-          form.setValues(value);
-          onDataChange(form.getValues());
-          validation && form.submit();
-        }, 0);
-      } catch (error) {
-        console.error(error);
+          setTimeout(() => {
+            form.setValues(value);
+            onDataChange(form.getValues());
+            validation && form.submit();
+          }, 0);
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        immediate: true
       }
-    });
+    );
 
     watch([validation, form?.errorFields], ([newValidation, newErrorFields]) => {
-      newValidation && onItemErrorChange(newErrorFields);
+      newValidation && store.onItemErrorChange(newErrorFields);
     });
 
     onMounted(() => {
@@ -127,9 +123,9 @@ const ItemSettings = defineComponent({
             form={form}
             schema={settingSchema}
             widgets={{ ..._widgets, ...props.widgets }}
-            mapping={globalMapping}
-            watch={{
-              '#': v => setTimeout(() => onDataChange(v), 0)
+            mapping={store.mapping}
+            watchMap={{
+              '#': v => onDataChange(v)
             }}
           />
         </div>

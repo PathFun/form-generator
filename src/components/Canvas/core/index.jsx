@@ -19,18 +19,22 @@ const PreviewFR = defineComponent({
     const form = useForm({
       removeHiddenData: false
     });
-    const { flatten, widgets, mapping, userProps, onFlattenChange } = useStore();
     form.setValues(props.data);
 
     return () => {
+      const { flatten, widgets, mapping, userProps, onFlattenChange, frProps = {} } = useStore();
       const renderSchema = userProps.transformer.to(props.schema);
+      const { column, displayType, labelWidth } = frProps;
       return (
         <FormRender
           schema={renderSchema}
           form={form}
+          labelWidth={labelWidth}
+          column={column}
+          displayType={displayType}
           widgets={widgets}
           mapping={mapping}
-          watch={{
+          watchMap={{
             '#': formData => {
               onFlattenChange(dataToFlatten(flatten, formData), 'data');
             }
@@ -54,7 +58,7 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   if (!item) return null;
 
   const { schema } = item;
-  const displayType = schema.displayType || frProps.displayType || 'row';
+  const displayType = schema.displayType || frProps.displayType;
   const isObj = schema.type === 'object';
   const isList = schema.type === 'array' && schema.enum === undefined && !!schema.items;
   const isComplex = isObj || isList;
@@ -139,13 +143,12 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   if (isEmpty) {
     return (
       <Wrapper style={columnStyle} _id={id} item={item}>
-        <div class={`${containerClass} h-100 f4 black-40 flex items-center justify-center`}>
+        <div class={`${containerClass} h-100 f4 black-40 flex items-center justify-center mb0`}>
           点击/拖拽左侧栏的组件进行添加
         </div>
       </Wrapper>
     );
   }
-
   return (
     <Wrapper style={columnStyle} _id={id} item={item}>
       <div class={containerClass}>

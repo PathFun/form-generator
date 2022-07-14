@@ -18,7 +18,7 @@ export const baseCommonSettings = {
 };
 
 export const defaultCommonSettings = {
-  $id: {
+  _id: {
     title: 'ID',
     description: '字段名称/英文',
     type: 'string',

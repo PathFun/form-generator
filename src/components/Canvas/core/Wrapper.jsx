@@ -1,5 +1,5 @@
 import { CopyOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons-vue';
-import { ref, defineComponent } from 'vue';
+import { ref, defineComponent, toRefs } from 'vue';
 import { useDrag, useDrop } from 'vue3-dnd';
 import { copyItem, dropItem, getKeyFromUniqueId, isObject } from '../../../utils';
 import { useGlobal, useStore } from '../../../utils/context';
@@ -9,11 +9,12 @@ const Wrapper = defineComponent({
   props: ['_id', 'item', 'inside', 'style'],
   setup(props, { slots }) {
     const position = ref();
-    const { flatten, onFlattenChange, selected, userProps, errorFields, fieldWrapperRender } = useStore();
-    const { controlButtons, canDrag = true, canDelete = true, hideId, getId } = userProps;
+    const store = useStore();
+    const { controlButtons, canDrag, canDelete, hideId, getId } = store.userProps;
     const setGlobal = useGlobal();
     const boxRef = ref();
-    const [{ isDragging }, dragRef, dragPreview] = useDrag({
+
+    const [collect, dragRef, dragPreview] = useDrag({
       type: 'box',
       item: { _id: props.inside ? 0 + props._id : props._id },
       canDrag: () => (typeof canDrag === 'function' ? canDrag(props.item.schema) : canDrag),
@@ -22,50 +23,37 @@ const Wrapper = defineComponent({
       })
     });
 
-    const [{ canDrop, isOver }, dropRef] = useDrop({
+    const [dropCollect, dropRef] = useDrop({
       accept: 'box',
       drop: async (item, monitor) => {
-        // 如果 children 已经作为了 drop target，不处理
         const didDrop = monitor.didDrop();
-
-        if (didDrop || errorFields?.length) {
+        if (didDrop || store.errorFields?.length) {
           return;
         }
-
         const [newFlatten, newId] = dropItem({
           dragId: item._id, // 内部拖拽用dragId
           dragItem: item.dragItem, // 从左边栏过来的，用dragItem
           dropId: props._id,
           position: position.value,
-          flatten
+          flatten: store.flatten
         });
-        onFlattenChange(newFlatten);
+        store.onFlattenChange(newFlatten);
         setGlobal({ selected: newId });
       },
       hover: (item, monitor) => {
         // 只检查被hover的最小元素
         const didHover = monitor.isOver({ shallow: true });
         if (didHover) {
-          // Determine rectangle on screen
           const hoverBoundingRect = boxRef.value && boxRef.value.getBoundingClientRect();
-          // Get vertical middle
           const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-          // Determine mouse position
-          // const clientOffset = monitor.getClientOffset();
           const dragOffset = monitor.getSourceClientOffset();
-          // Get pixels to the top
           const hoverClientY = dragOffset.y - hoverBoundingRect.top;
-          // Only perform the move when the mouse has crossed half of the items height
-          // When dragging downwards, only move when the cursor is below 50%
-          // When dragging upwards, only move when the cursor is above 50%
-          // Dragging downwards
           if (props.inside) {
             position.value = 'inside';
           } else {
             if (hoverClientY <= hoverMiddleY) {
               position.value = 'up';
             }
-            // Dragging upwards
             if (hoverClientY > hoverMiddleY) {
               position.value = 'down';
             }
@@ -78,21 +66,22 @@ const Wrapper = defineComponent({
       })
     });
 
+    dragPreview(dropRef(boxRef));
+
+    const { isDragging } = toRefs(collect);
+    const { canDrop, isOver } = toRefs(dropCollect);
+
     const handleClick = async e => {
       e.stopPropagation();
-      if (errorFields?.length) return;
+      if (store.errorFields?.length) return;
       const _id = props.inside ? '0' + props._id : props._id;
       setGlobal({ selected: _id });
     };
 
     const deleteItem = async e => {
       e.stopPropagation();
-      const newFlatten = { ...flatten };
+      const newFlatten = { ...store.flatten };
       let newSelect = '#';
-      // 计算删除后新被选中的元素：
-      // 1. 如果是第一个，选第二个
-      // 2. 如果不是第一，选它前一个
-      // 3. 如果同级元素没了，选parent
       try {
         const parent = newFlatten[props._id].parent;
         const siblings = newFlatten[parent].children;
@@ -111,26 +100,24 @@ const Wrapper = defineComponent({
       }
       if (!_canDelete) return;
       delete newFlatten[props._id];
-      onFlattenChange(newFlatten);
+      store.onFlattenChange(newFlatten);
       setGlobal({ selected: newSelect });
     };
 
     const handleItemCopy = e => {
       e.stopPropagation();
-      if (errorFields?.length) return;
-      const [newFlatten, newId] = copyItem(flatten, props._id, getId);
-      onFlattenChange(newFlatten);
+      if (store.errorFields?.length) return;
+      const [newFlatten, newId] = copyItem(store.flatten, props._id, getId);
+      store.onFlattenChange(newFlatten);
       setGlobal({ selected: newId });
     };
 
     return () => {
       const { schema } = props.item;
       const { type } = schema;
-
+      const { flatten, selected, fieldWrapperRender } = store;
       const isActive = canDrop && isOver;
-      dragPreview(dropRef(boxRef));
 
-      // 一些computed
       let isSelected = selected === props._id && !props.inside;
       if (selected && selected[0] === '0') {
         isSelected = selected.substring(1) === props._id && props.inside;
@@ -144,7 +131,6 @@ const Wrapper = defineComponent({
         overwriteStyle = {
           ...overwriteStyle,
           borderColor: '#777',
-          // marginLeft: 12,
           padding: '12px 12px 0',
           backgroundColor: '#f6f5f6'
         };
@@ -166,12 +152,12 @@ const Wrapper = defineComponent({
             ...overwriteStyle,
             boxShadow: '0 -3px 0 red'
           };
-        } else if (position === 'up') {
+        } else if (position.value === 'up') {
           overwriteStyle = {
             ...overwriteStyle,
             boxShadow: '0 -3px 0 red'
           };
-        } else if (position === 'down') {
+        } else if (position.value === 'down') {
           overwriteStyle = {
             ...overwriteStyle,
             boxShadow: '0 3px 0 red'
@@ -186,7 +172,7 @@ const Wrapper = defineComponent({
           zIndex: 1
         };
       }
-      if (props.style && typeof style === 'object') {
+      if (props.style && typeof props.style === 'object') {
         overwriteStyle = {
           ...overwriteStyle,
           ...props.style

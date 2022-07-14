@@ -2550,10 +2550,10 @@ form-data@^4.0.0:
     combined-stream "^1.0.8"
     mime-types "^2.1.12"
 
-form-render-vue3@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.npmjs.org/form-render-vue3/-/form-render-vue3-1.0.6.tgz#0b6113d3536ff034bdf059fcb5fdde54862d5080"
-  integrity sha512-r1rWS8vE7/20exBTjq75UAjMTmTv0TEHguHorykaTbrx3a6z4tuvq+1mXgg+QNmW2yuVsu8HjsZWc4XMG7mDqA==
+form-render-vue3@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.npmjs.org/form-render-vue3/-/form-render-vue3-1.0.8.tgz#2e9e5cf52d4556a8655e2a6a1259bc693cc84c27"
+  integrity sha512-MHyluOPH20m9ZaaJAsHy5Jn1grJUClyYR4/GyznO3iEepMjWCUbxqMVLvHyaBqpkgquVMLPN3ZsM+yYkb2Yh7w==
   dependencies:
     "@ant-design/icons-vue" "^6.1.0"
     "@vitejs/plugin-vue-jsx" "^1.3.8"

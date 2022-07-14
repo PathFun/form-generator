@@ -12,8 +12,7 @@ const RenderField = defineComponent({
     isComplex: Boolean
   },
   setup(props, { slots }) {
-    const { onItemChange, flatten, widgets, mapping, frProps = {}, fieldRender } = useStore();
-    const { labelWidth, displayType, showValidate } = frProps;
+    const store = useStore();
 
     const onChange = value => {
       const { item, _id } = props;
@@ -23,11 +22,13 @@ const RenderField = defineComponent({
       } else {
         newItem.data = value;
       }
-      onItemChange(_id, newItem, 'data');
+      store.onItemChange(_id, newItem, 'data');
     };
 
     return () => {
       const { schema, data } = props.item;
+      const { flatten, widgets, mapping, frProps = {}, fieldRender } = store;
+      const { labelWidth, displayType, showValidate } = frProps;
       const { title, description, required } = schema;
 
       let widgetName = getWidgetName(schema, mapping);

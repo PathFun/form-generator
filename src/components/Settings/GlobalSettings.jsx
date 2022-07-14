@@ -9,38 +9,46 @@ const GlobalSettings = defineComponent({
   },
   setup(props) {
     const form = useForm({
-      removeHiddenData: false
+      removeHiddenData: false,
+      formData: {}
     });
     const innerUpdate = ref(false);
-    const { widgets: globalWidgets, frProps, userProps = {}, mapping } = useStore();
+    const store = useStore();
     const setGlobal = useGlobal();
-    const globalSettings = userProps.globalSettings || defaultGlobalSettings;
+    const globalSettings = store.userProps?.globalSettings || defaultGlobalSettings;
 
     const onDataChange = value => {
       innerUpdate.value = !!Object.keys(value).length;
       setGlobal({ frProps: value });
     };
 
-    watch(frProps, newValue => {
-      if (innerUpdate) {
-        innerUpdate.value = false;
-      } else {
-        form.setValues(newValue);
+    watch(
+      () => store.frProps,
+      newValue => {
+        if (innerUpdate) {
+          innerUpdate.value = false;
+        } else {
+          form.setValues(newValue);
+        }
       }
-    });
+    );
 
     onMounted(() => {
       setGlobal({ settingsForm: form });
     });
 
     return () => {
+      const { widgets: globalWidgets, frProps, userProps = {}, mapping } = store;
       return (
-        <div style={{ paddingRight: 24 }}>
+        <div>
           <FormRender
             form={form}
             schema={globalSettings}
-            watch={{
-              '#': v => onDataChange(v)
+            watchMap={{
+              '#': {
+                handler: v => onDataChange(v),
+                immediate: true
+              }
             }}
             widgets={{ ...globalWidgets, ...props.widgets }}
             mapping={mapping}

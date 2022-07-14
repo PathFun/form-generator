@@ -1,6 +1,6 @@
 import { RightOutlined } from '@ant-design/icons-vue';
 import { Tabs } from 'ant-design-vue';
-import { defineComponent, reactive, watch } from 'vue';
+import { defineComponent, reactive, watch, computed } from 'vue';
 import { useStore } from '../../utils/context';
 import GlobalSettings from './GlobalSettings';
 import './index.less';
@@ -18,10 +18,9 @@ const Settings = defineComponent({
       showRight: true,
       showItemSettings: false
     });
-    const { selected, userProps = {} } = useStore();
-    const { tabsKey, showRight, showItemSettings } = state;
+    const store = useStore();
 
-    const toggleRight = () => Object.assign(state, { showRight: !showRight });
+    const toggleRight = () => Object.assign(state, { showRight: !state.showRight });
 
     const ToggleIcon = () => (
       <div
@@ -41,7 +40,7 @@ const Settings = defineComponent({
 
     // 如果没有选中任何item，或者是选中了根节点，object、list的内部，显示placeholder
     watch(
-      () => selected,
+      () => store.selected,
       newValue => {
         if ((newValue && newValue[0] === '0') || newValue === '#' || !newValue) {
           Object.assign(state, { tabsKey: 'globalSettings', showItemSettings: false });
@@ -51,12 +50,16 @@ const Settings = defineComponent({
       }
     );
 
-    const globalSettingHide =
-      userProps.globalSettings === null || (userProps.globalSettings && !Object.keys(userProps.globalSettings).length);
+    const globalSettingHide = computed(
+      () =>
+        store.userProps.globalSettings === null ||
+        (store.userProps.globalSettings && !Object.keys(store.userProps.globalSettings).length)
+    );
 
     return () => {
+      const { tabsKey, showRight, showItemSettings } = state;
       return showRight ? (
-        <div class="right-layout relative pl2">
+        <div class="right-layout relative pl2 pr2">
           <ToggleIcon />
           <Tabs activeKey={tabsKey} onChange={key => Object.assign(state, { tabsKey: key })}>
             {showItemSettings && (
@@ -64,7 +67,7 @@ const Settings = defineComponent({
                 <ItemSettings widgets={props.widgets} />
               </TabPane>
             )}
-            {!globalSettingHide && (
+            {!globalSettingHide.value && (
               <TabPane tab="表单配置" key="globalSettings">
                 <GlobalSettings widgets={props.widgets} />
               </TabPane>

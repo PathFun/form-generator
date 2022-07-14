@@ -27,8 +27,14 @@ const Provider = defineComponent({
   name: 'Provider',
   props: {
     defaultValue: Object,
-    canDrag: Boolean,
-    canDelete: Boolean,
+    canDrag: {
+      type: [Boolean, Function],
+      default: true
+    },
+    canDelete: {
+      type: [Boolean, Function],
+      default: true
+    },
     transformer: Object,
     extraButtons: Array,
     controlButtons: Array,
@@ -95,11 +101,11 @@ const Provider = defineComponent({
     };
 
     const onItemChange = (key, value, changeSource) => {
-      Object.assign(flattenWithData, { [key]: value });
+      const newFlattenWithData = { ...store.flatten, [key]: value };
       Object.assign(store, {
-        flatten: flattenWithData
+        flatten: newFlattenWithData
       });
-      onFlattenChange(flattenWithData, changeSource);
+      onFlattenChange(newFlattenWithData, changeSource);
     };
 
     const getValue = () => store.displaySchema;
@@ -131,11 +137,19 @@ const Provider = defineComponent({
 
     const getSettingsForm = () => state.settingsForm;
 
+    const _transformer = {
+      from: schema => schema,
+      to: schema => schema,
+      fromSetting,
+      toSetting,
+      ...props.transformer
+    };
+
     const userProps = {
       canDrag: props.canDrag,
       canDelete: props.canDelete,
       submit: emit('submit'),
-      transformer: props.transformer,
+      transformer: _transformer,
       extraButtons: props.extraButtons,
       controlButtons: props.controlButtons,
       hideId: props.hideId,
@@ -170,14 +184,6 @@ const Provider = defineComponent({
     Ctx(value => Object.assign(store, { ...value }));
     StoreCtx(store);
 
-    const _transformer = {
-      from: schema => schema,
-      to: schema => schema,
-      fromSetting,
-      toSetting,
-      ...props.transformer
-    };
-
     watch(
       () => props.defaultValue,
       newValue => {
@@ -193,9 +199,6 @@ const Provider = defineComponent({
       }
     );
 
-    const flatten = {};
-    const flattenWithData = {};
-
     watch(
       [() => state.schema, () => state.formData],
       ([newSchema, newFormData]) => {
@@ -204,10 +207,10 @@ const Provider = defineComponent({
           _schema = combineSchema(newSchema);
         }
 
-        Object.assign(flatten, { ...flattenSchema(_schema) });
-        Object.assign(flattenWithData, {
+        const flatten = { ...flattenSchema(_schema) };
+        const flattenWithData = {
           ..._transformer.from(dataToFlatten(flatten, newFormData))
-        });
+        };
 
         let displaySchema = {};
         let displaySchemaString = '';
@@ -217,11 +220,11 @@ const Provider = defineComponent({
             ...state.frProps
           };
           displaySchema = _transformer.to(schema);
+          console.log(displaySchema);
           displaySchemaString = JSON.stringify(displaySchema, null, 2);
         } catch (error) {
           console.log(error);
         }
-
         Object.assign(store, {
           flatten: flattenWithData,
           displaySchema,
@@ -232,6 +235,13 @@ const Provider = defineComponent({
         immediate: true
       }
     );
+
+    watch([() => state.selected, () => state.preview], ([selected, preview]) => {
+      Object.assign(store, {
+        selected,
+        preview
+      });
+    });
 
     expose({
       getValue,

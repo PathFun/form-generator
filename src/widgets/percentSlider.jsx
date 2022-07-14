@@ -56,7 +56,7 @@ const PercentSlider = p => {
   return (
     <div class="fr-slider">
       <Slider
-        style={{ flexGrow: 1, marginRight: hideNumber ? 0 : 12 }}
+        class={'flex-grow-1' + (hideNumber ? '' : ' mr12')}
         {...setting}
         onChange={handleChange}
         max={100}

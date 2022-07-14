@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent, unref, computed } from 'vue';
 import { useDrag } from 'vue3-dnd';
 import { addItem } from '../../utils';
 import { useGlobal, useStore } from '../../utils/context';
@@ -8,10 +8,10 @@ const Element = defineComponent({
   props: ['text', 'name', 'schema', 'icon', 'fixedName'],
   setup(props) {
     const setGlobal = useGlobal();
-    const { selected, flatten, errorFields, userProps, onFlattenChange, elementRender } = useStore();
-    const { getId } = userProps;
+    const store = useStore();
+    const { getId } = store.userProps;
 
-    const [{ isDragging }, dragRef] = useDrag({
+    const [collect, dragRef] = useDrag({
       type: 'box',
       item: {
         dragItem: {
@@ -26,7 +26,10 @@ const Element = defineComponent({
       })
     });
 
+    const isDragging = computed(() => unref(collect).isDragging);
+
     const handleElementClick = async () => {
+      const { selected, flatten, errorFields, onFlattenChange } = store;
       if (errorFields?.length) return;
       if (selected && !flatten[selected]) {
         setGlobal({ selected: '#' });
@@ -43,8 +46,12 @@ const Element = defineComponent({
       onFlattenChange(newFlatten);
       setGlobal({ selected: newId });
     };
+    const setDrop = el => {
+      dragRef(el);
+    };
 
     return () => {
+      const { elementRender } = store;
       const widgetProps = {
         text: props.text,
         icon: props.icon,
@@ -53,7 +60,7 @@ const Element = defineComponent({
 
       const originNode = <WidgetUI {...widgetProps} />;
       return (
-        <div ref={dragRef}>{elementRender ? elementRender(props.schema, widgetProps, originNode) : originNode}</div>
+        <div ref={setDrop}>{elementRender ? elementRender(props.schema, widgetProps, originNode) : originNode}</div>
       );
     };
   }
