@@ -220,7 +220,6 @@ const Provider = defineComponent({
             ...state.frProps
           };
           displaySchema = _transformer.to(schema);
-          console.log(displaySchema);
           displaySchemaString = JSON.stringify(displaySchema, null, 2);
         } catch (error) {
           console.log(error);

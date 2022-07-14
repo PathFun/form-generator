@@ -1,0 +1,31 @@
+{
+    "testing.automaticallyOpenPeekView": "never",
+    "css.validate": false,
+    "less.validate": false,
+    "scss.validate": false,
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.stylelint": true,
+      "source.fixAll.eslint": true
+    },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "vue",
+      "html"
+    ],
+    "eslint.alwaysShowStatus": true,
+    "stylelint.validate": [
+      "css",
+      "less",
+      "postcss",
+      "scss",
+      "vue",
+      "sass",
+      "less"
+    ],
+    "stylelint.packageManager": "yarn",
+    "prettier-config.tip": false
+  }
+  

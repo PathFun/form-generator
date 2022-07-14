@@ -1,5 +1,5 @@
 import { CopyOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons-vue';
-import { ref, defineComponent, toRefs } from 'vue';
+import { ref, defineComponent, computed, unref } from 'vue';
 import { useDrag, useDrop } from 'vue3-dnd';
 import { copyItem, dropItem, getKeyFromUniqueId, isObject } from '../../../utils';
 import { useGlobal, useStore } from '../../../utils/context';
@@ -16,7 +16,7 @@ const Wrapper = defineComponent({
 
     const [collect, dragRef, dragPreview] = useDrag({
       type: 'box',
-      item: { _id: props.inside ? 0 + props._id : props._id },
+      item: () => ({ _id: props.inside ? 0 + props._id : props._id }),
       canDrag: () => (typeof canDrag === 'function' ? canDrag(props.item.schema) : canDrag),
       collect: monitor => ({
         isDragging: monitor.isDragging()
@@ -66,10 +66,13 @@ const Wrapper = defineComponent({
       })
     });
 
-    dragPreview(dropRef(boxRef));
+    const isDragging = computed(() => unref(collect).isDragging);
 
-    const { isDragging } = toRefs(collect);
-    const { canDrop, isOver } = toRefs(dropCollect);
+    const canDrop = computed(() => unref(dropCollect).canDrop);
+
+    const isOver = computed(() => unref(dropCollect).isOver);
+
+    dragPreview(dropRef(boxRef));
 
     const handleClick = async e => {
       e.stopPropagation();
@@ -116,7 +119,7 @@ const Wrapper = defineComponent({
       const { schema } = props.item;
       const { type } = schema;
       const { flatten, selected, fieldWrapperRender } = store;
-      const isActive = canDrop && isOver;
+      const isActive = canDrop.value && isOver.value;
 
       let isSelected = selected === props._id && !props.inside;
       if (selected && selected[0] === '0') {
@@ -125,7 +128,7 @@ const Wrapper = defineComponent({
 
       let overwriteStyle = {
         backgroundColor: '#fff',
-        opacity: isDragging ? 0 : 1
+        opacity: isDragging.value ? 0 : 1
       };
       if (props.inside) {
         overwriteStyle = {
