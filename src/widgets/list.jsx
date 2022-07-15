@@ -9,7 +9,7 @@ export default function list(props, { slots }) {
   return (
     <div class="flex flex-column">
       <div class="fr-set w-100 flex flex-column ba pt4 pb2 ph2 relative b--black-10">
-        {props.children}
+        {slots.default ? slots.default() : null}
         <Button size="small" class="self-end" type="dashed" icon={<DeleteOutlined />}>
           删除
         </Button>

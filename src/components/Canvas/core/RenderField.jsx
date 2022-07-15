@@ -36,7 +36,6 @@ const RenderField = defineComponent({
       if (customWidget && widgets[customWidget]) {
         widgetName = customWidget;
       }
-
       let Widget = widgets[widgetName];
       if (!Widget) {
         const defaultSchema = { ...schema };

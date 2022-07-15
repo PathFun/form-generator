@@ -12,10 +12,14 @@ const defaultValue = {
     }
   }
 };
+
+const handleClick = () => {
+  console.log(1111111111);
+};
 </script>
 
 <template>
-  <Generator :defaultValue="defaultValue" />
+  <Generator :defaultValue="defaultValue" :extraButtons="[{ text: '去playground验证', onclick: handleClick }]" />
 </template>
 <style lang="less">
 #app {
