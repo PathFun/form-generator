@@ -1,5 +1,5 @@
 import FormRender, { useForm } from 'form-render-vue3';
-import { defineComponent, watch, onMounted, reactive } from 'vue';
+import { defineComponent, watch, onMounted, reactive, computed } from 'vue';
 import {
   advancedElements,
   baseCommonSettings,
@@ -70,6 +70,14 @@ const ItemSettings = defineComponent({
       }
     };
 
+    const widgetList = computed(() => {
+      const _settings = Array.isArray(settings)
+        ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }] // TODO: 不是最优解
+        : defaultSettings;
+      const _commonSettings = isObject(commonSettings) ? commonSettings : defaultCommonSettings;
+      return getWidgetList(_settings, _commonSettings);
+    });
+
     watch(
       () => store.selected,
       newValue => {
@@ -79,20 +87,15 @@ const ItemSettings = defineComponent({
           const item = flatten[newValue];
           if (!item || newValue === '#') return;
           // 算 widgetList
-          const _settings = Array.isArray(settings)
-            ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }] // TODO: 不是最优解
-            : defaultSettings;
-          const _commonSettings = isObject(commonSettings) ? commonSettings : defaultCommonSettings;
-          const widgetList = getWidgetList(_settings, _commonSettings);
           const widgetName = getWidgetName(item.schema, mapping);
-          const element = widgetList.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
+          const element = widgetList.value.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
           const properties = { ...element.setting };
           if (hideId) delete properties._id;
-          settingSchema = {
+          Object.assign(settingSchema, {
             type: 'object',
             displayType: 'column',
             properties
-          };
+          });
           const value = transformer.toSetting(item.schema);
           setTimeout(() => {
             form.setValues(value);

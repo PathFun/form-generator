@@ -38,7 +38,7 @@ const GlobalSettings = defineComponent({
     });
 
     return () => {
-      const { widgets: globalWidgets, frProps, userProps = {}, mapping } = store;
+      const { widgets: globalWidgets, mapping } = store;
       return (
         <div>
           <FormRender

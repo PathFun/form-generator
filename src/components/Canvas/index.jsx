@@ -1,6 +1,6 @@
 import { Button, Input, message, Modal } from 'ant-design-vue';
 import copyTOClipboard from 'copy-text-to-clipboard';
-import { defineComponent, reactive, watch, watchEffect } from 'vue';
+import { defineComponent, reactive, watch } from 'vue';
 import { idToSchema, isObject, looseJsonParse, schemaToState } from '../../utils';
 import { useGlobal, useStore } from '../../utils/context';
 import FR from './core';
