@@ -1,5 +1,5 @@
 import FormRender, { useForm } from 'form-render-vue3';
-import { defineComponent, watch, onMounted, reactive, computed } from 'vue';
+import { defineComponent, watch, onMounted, ref, computed } from 'vue';
 import {
   advancedElements,
   baseCommonSettings,
@@ -22,7 +22,7 @@ const ItemSettings = defineComponent({
     const form = useForm();
     const store = useStore();
     const { settings, commonSettings, hideId, validation, transformer } = store.userProps;
-    let settingSchema = reactive({});
+    const settingSchema = ref({});
 
     const _widgets = {
       ...store.widgets,
@@ -91,11 +91,11 @@ const ItemSettings = defineComponent({
           const element = widgetList.value.find(e => e.widget === widgetName) || {}; // 有可能会没有找到
           const properties = { ...element.setting };
           if (hideId) delete properties._id;
-          Object.assign(settingSchema, {
+          settingSchema.value = {
             type: 'object',
             displayType: 'column',
             properties
-          });
+          };
           const value = transformer.toSetting(item.schema);
           setTimeout(() => {
             form.setValues(value);
@@ -124,7 +124,7 @@ const ItemSettings = defineComponent({
         <div style={{ paddingRight: 24 }}>
           <FormRender
             form={form}
-            schema={settingSchema}
+            schema={settingSchema.value}
             widgets={{ ..._widgets, ...props.widgets }}
             mapping={store.mapping}
             watchMap={{

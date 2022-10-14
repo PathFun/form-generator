@@ -60,7 +60,10 @@ const Provider = defineComponent({
     validation: {
       type: Boolean,
       default: true
-    }
+    },
+    fieldRender: Function,
+    fieldWrapperRender: Function,
+    elementRender: Function
   },
   components: {
     ConfigProvider,
@@ -172,9 +175,9 @@ const Provider = defineComponent({
       frProps: {},
       displaySchema: {},
       displaySchemaString: '',
-      fieldRender: slots.fieldRender,
-      fieldWrapperRender: slots.fieldWrapperRender,
-      elementRender: slots.elementRender,
+      fieldRender: props.fieldRender,
+      fieldWrapperRender: props.fieldWrapperRender,
+      elementRender: props.elementRender,
       preview: false,
       mapping: { ...defaultMapping, ...props.mapping },
       widgets: { ...defaultWidgets, ...props.widgets, list },
