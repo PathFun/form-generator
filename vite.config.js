@@ -35,10 +35,11 @@ export default defineConfig({
       name: name
     },
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', 'form-render-vue3'],
       output: {
         globals: {
-          vue: 'Vue'
+          vue: 'Vue',
+          'form-render-vue3': 'formRenderVue3'
         }
       }
     }

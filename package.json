@@ -1,7 +1,19 @@
 {
   "name": "form-generator-antv",
   "private": false,
-  "version": "0.0.3",
+  "version": "0.0.5",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/form-generator-antv.es.js",
+  "module": "./dist/form-generator-antv.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/form-generator-antv.es.js",
+      "require": "./dist/form-generator-antv.umd.js"
+    },
+    "./dist/style.css": "./dist/style.css"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
@@ -60,6 +72,11 @@
     "vite": "^2.9.9",
     "vite-plugin-eslint": "^1.6.1",
     "vitest": "^0.17.0"
+  },
+  "peerDependencies": {
+    "ant-design-vue": ">=3.2.3",
+    "vue": ">=3.2.0",
+    "form-render-vue3": "^1.1.2"
   },
   "lint-staged": {
     "*.{js,jsx,vue,ts,tsx}": "yarn lint:script",
