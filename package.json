@@ -1,7 +1,7 @@
 {
   "name": "form-generator-antv",
   "private": false,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "files": [
     "dist"
   ],
@@ -27,7 +27,8 @@
     "lint:ls": "ls-lint",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "version": "node ./scripts/generate-version"
   },
   "dependencies": {
     "@ant-design/icons-vue": "^6.1.0",
@@ -75,8 +76,8 @@
   },
   "peerDependencies": {
     "ant-design-vue": ">=3.2.3",
-    "vue": ">=3.2.0",
-    "form-render-vue3": "^1.1.2"
+    "form-render-vue3": "^1.1.2",
+    "vue": ">=3.2.0"
   },
   "lint-staged": {
     "*.{js,jsx,vue,ts,tsx}": "yarn lint:script",
