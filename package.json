@@ -1,7 +1,7 @@
 {
   "name": "form-generator-antv",
   "private": false,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
@@ -22,7 +22,7 @@
     "ant-design-vue": "^3.2.10",
     "clone": "^2.1.2",
     "copy-text-to-clipboard": "^3.0.1",
-    "form-render-vue3": "^1.1.0",
+    "form-render-vue3": "^1.1.2",
     "nanoid": "^4.0.0",
     "react-dnd-html5-backend": "^16.0.1",
     "vue": "^3.2.25",
