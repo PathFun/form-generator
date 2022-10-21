@@ -16,7 +16,7 @@ import {
   schemaToState
 } from './utils';
 import { Ctx, StoreCtx } from './utils/context';
-import list from './widgets/list';
+import * as frgWidgets from './widgets';
 
 const DEFAULT_SCHEMA = {
   type: 'object',
@@ -180,11 +180,12 @@ const Provider = defineComponent({
       elementRender: props.elementRender,
       preview: false,
       mapping: { ...defaultMapping, ...props.mapping },
-      widgets: { ...defaultWidgets, ...props.widgets, list },
+      widgets: { ...defaultWidgets, ...props.widgets, ...frgWidgets },
       selected: undefined
     });
 
     Ctx(value => Object.assign(store, { ...value }));
+
     StoreCtx(store);
 
     watch(
@@ -214,7 +215,6 @@ const Provider = defineComponent({
         const flattenWithData = {
           ..._transformer.from(dataToFlatten(flatten, newFormData))
         };
-
         let displaySchema = {};
         let displaySchemaString = '';
         try {

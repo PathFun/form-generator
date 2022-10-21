@@ -89,7 +89,7 @@ const Canvas = defineComponent({
 
     return () => {
       const { preview } = local;
-      const { displaySchema, displaySchemaString, selected } = store;
+      const { displaySchema, displaySchemaString } = store;
       return (
         <div class="mid-layout pr2">
           <div class="mv2 mh1">

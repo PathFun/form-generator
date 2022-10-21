@@ -135,7 +135,7 @@ const Wrapper = defineComponent({
           ...overwriteStyle,
           borderColor: '#777',
           padding: '12px 12px 0',
-          backgroundColor: '#f6f5f6'
+          backgroundColor: '#fcfcfc'
         };
       } else if (props._id === '#') {
         overwriteStyle = {
@@ -202,7 +202,6 @@ const Wrapper = defineComponent({
         Object.keys(flatten)
           .map(key => flatten[key].schema._id)
           .filter(key => key === schema._id).length > 1;
-
       const originNode = (
         <div
           ref={boxRef}
@@ -214,7 +213,7 @@ const Wrapper = defineComponent({
 
           <div class="absolute top-0 right-1 f7">
             {!props.inside && props._id !== '#' && !hideId && (
-              <span class={hasDuplicateId ? 'red' : 'blue'}>{shownId}</span>
+              <span class={hasDuplicateId ? 'red' : 'blue'}>{shownId} </span>
             )}
             {schema.hidden && <span style={{ color: '#666', marginLeft: '6px' }}>[hidden]</span>}
           </div>
@@ -246,6 +245,7 @@ const Wrapper = defineComponent({
               })}
             </div>
           )}
+          {props.inside && isSelected && slots.widgetBtns ? slots.widgetBtns() : null}
         </div>
       );
 

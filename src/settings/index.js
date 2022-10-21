@@ -160,7 +160,7 @@ export const elements = [
     }
   },
   {
-    text: '大输入框',
+    text: '文本输入框',
     name: 'textarea',
     schema: {
       title: '编辑框',
@@ -820,15 +820,17 @@ export const defaultSettings = [
     title: '基础组件',
     widgets: elements,
     show: true,
-    useCommon: true // TODO: 是否将common
+    useCommon: true
   },
   {
     title: '高级组件',
-    widgets: advancedElements
+    widgets: advancedElements,
+    useCommon: true
   },
   {
     title: '布局组件',
-    widgets: layouts
+    widgets: layouts,
+    useCommon: true
   },
   {
     title: '模板',

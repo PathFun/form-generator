@@ -62,7 +62,7 @@ export function combineSchema(propsSchema = {}, uiSchema = {}) {
   const newList = propList.map(p => {
     const { name } = p;
     const { type, enum: options, properties, items } = p.schema;
-    const isObj = type === 'object' && properties;
+    const isObj = (type === 'object' || type === 'object:table') && properties;
     const isArr = type === 'array' && items && !options; // enum + array 代表的多选框，没有sub
     const ui = name && uiSchema[p.name];
     if (!ui) {
@@ -116,7 +116,7 @@ function getChildren(schema) {
     return [];
   }
   let schemaSubs = {};
-  if (type === 'object') {
+  if (type === 'object' || type === 'object:table') {
     schemaSubs = properties;
   }
   if (type === 'array') {
@@ -174,7 +174,7 @@ export function flattenSchema(schema, name = '#', parent, result = {}) {
     _schema._id = name; // 给生成的schema添加一个唯一标识，方便从schema中直接读取
   }
   const children = [];
-  const isObj = _schema.type === 'object' && _schema.properties;
+  const isObj = !!((_schema.type === 'object' || _schema.type === 'object:table') && _schema.properties);
   const isList = _schema.type === 'array' && _schema.items && _schema.items.properties;
   if (isObj) {
     Object.entries(_schema.properties).forEach(([key, value]) => {
@@ -241,7 +241,7 @@ export function idToSchema(flatten, id = '#', final = false) {
           console.error(error, 'catch');
         }
         const key = getKeyFromUniqueId(childId);
-        if (schema.type === 'object') {
+        if (schema.type === 'object' || schema.type === 'object:table') {
           if (!schema.properties) {
             schema.properties = {};
           }
@@ -255,7 +255,7 @@ export function idToSchema(flatten, id = '#', final = false) {
         }
       });
     } else {
-      if (schema.type === 'object' && !schema.properties) {
+      if ((schema.type === 'object' || schema.type === 'object:table') && !schema.properties) {
         schema.properties = {};
       }
       if (schema.type === 'array' && schema.items && schema.items.type === 'object' && !schema.items.properties) {
@@ -266,20 +266,43 @@ export function idToSchema(flatten, id = '#', final = false) {
   return schema;
 }
 
-export const copyItem = (flatten, _id, getId) => {
+export function getRowsIndexs(rows = [], parentId, id) {
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].length) {
+      for (let j = 0; j < rows[i].length; j++) {
+        if (rows[i][j].widgets && rows[i][j].widgets.length) {
+          const index = rows[i][j].widgets.findIndex(d => `${parentId}/${d}` === id);
+          if (index > -1) {
+            return [i, j, index];
+          }
+        }
+      }
+    }
+  }
+  return [];
+}
+
+export const copyItem = (flatten, id, getId) => {
   let newFlatten = { ...flatten };
   try {
-    const item = flatten[_id];
-    const newId = getId(_id);
+    const item = flatten[id];
+    const newId = getId(id);
     const siblings = newFlatten[item.parent].children;
-    const idx = siblings.findIndex(x => x === _id);
+    const idx = siblings.findIndex(x => x === id);
     siblings.splice(idx + 1, 0, newId);
-    newFlatten[newId] = deepClone(newFlatten[_id]);
+    newFlatten[newId] = deepClone(newFlatten[id]);
     newFlatten[newId].schema._id = newId;
+    if (newFlatten[item.parent].schema.type === 'object:table') {
+      const { props = {}, _id } = newFlatten[item.parent].schema;
+      const cellItem = props.rows || [];
+      const [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, id);
+      const subIds = newId.split('/');
+      props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, subIds[subIds.length - 1]);
+    }
     return [newFlatten, newId];
   } catch (error) {
     console.error(error, 'catcherror');
-    return [flatten, _id];
+    return [flatten, id];
   }
 };
 
@@ -326,6 +349,16 @@ export const addItem = ({ selected, name, schema, flatten, fixedName, getId }) =
     const siblings = newFlatten[item.parent].children;
     const idx = siblings.findIndex(x => x === selected);
     siblings.splice(idx + 1, 0, newId);
+    if (newFlatten[item.parent].schema.type === 'object:table') {
+      const { props = {}, _id } = newFlatten[item.parent].schema;
+      const cellItem = props.rows || [];
+      let [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, selected);
+      if (rowIndex === undefined) {
+        props.rows[0][0].widgets.push(_name);
+      } else {
+        props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, _name);
+      }
+    }
     const newItem = {
       parent: item.parent,
       schema: { ...schema, _id: newId },
@@ -341,22 +374,22 @@ export const addItem = ({ selected, name, schema, flatten, fixedName, getId }) =
 
 // position 代表 drop 在元素的哪里: 'up' 上 'down' 下 'inside' 内部
 export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
-  const _position = dropId === '#' ? 'inside' : position;
+  const dropIds = dropId.split('|');
+  const realDropId = dropIds[0];
+  const _position = realDropId === '#' ? 'inside' : position;
   let newFlatten = { ...flatten };
-  // 会动到三块数据，dragItem, dragParent, dropParent. 其中dropParent可能就是dropItem（inside的情况）
   if (dragItem) {
     newFlatten[dragId] = dragItem;
   }
   const _dragItem = dragItem || newFlatten[dragId];
-
-  const dropItem = newFlatten[dropId];
+  const dropItem = newFlatten[realDropId];
   let dropParent = dropItem;
   if (_position !== 'inside') {
     const parentId = dropItem.parent;
     dropParent = newFlatten[parentId];
   }
   // TODO: 这块的体验，现在这样兜底了，但是drag起一个元素了，应该让原本变空
-  if (dropId.indexOf(dragId) > -1) {
+  if (realDropId.indexOf(dragId) > -1) {
     return [newFlatten, dragId];
   }
 
@@ -375,26 +408,70 @@ export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
     if (idx > -1 && !dragItem) {
       dragParent.children.splice(idx, 1);
     }
+    /******* table的判断 ******/
+    const { props = {}, type } = dragParent.schema;
+    if (type === 'object:table' && props.rows && props.rows.length) {
+      const { props = {}, _id } = dragParent.schema;
+      const cellItem = props.rows;
+      const [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, dragId);
+      if (rowIndex !== undefined) dragParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index, 1);
+    }
+    /******* end *********/
   } catch (error) {
     console.error(error);
   }
+
   try {
-    // dropParent 的 children 添加 dragId
-    const newChildren = dropParent.children || []; // 要考虑children为空，inside的情况
-    const idx = newChildren.indexOf(dropId);
-    switch (_position) {
-      case 'up':
-        newChildren.splice(idx, 0, dragId);
-        break;
-      case 'down':
-        newChildren.splice(idx + 1, 0, dragId);
-        break;
-      default:
-        // inside 作为 default 情况
-        newChildren.push(dragId);
-        break;
+    const next = function () {
+      // dropParent 的 children 添加 dragId
+      const newChildren = dropParent.children || []; // 要考虑children为空，inside的情况
+      const idx = newChildren.indexOf(realDropId);
+      switch (_position) {
+        case 'up':
+          newChildren.splice(idx, 0, dragId);
+          break;
+        case 'down':
+          newChildren.splice(idx + 1, 0, dragId);
+          break;
+        default:
+          // inside 作为 default 情况
+          newChildren.push(dragId);
+          break;
+      }
+      dropParent.children = newChildren;
+    };
+    /******* table的判断 ******/
+    const { props = {}, type } = dropParent.schema;
+    if (type === 'object:table' && props.rows && props.rows.length) {
+      const { _id, props = {} } = dropParent.schema;
+      let [rowIndex, colIndex] = [dropIds[1], dropIds[2]];
+      if (rowIndex === undefined || colIndex === undefined) {
+        const cellItem = props.rows;
+        [rowIndex, colIndex] = getRowsIndexs(cellItem, _id, dropId);
+      }
+      if (rowIndex !== undefined) {
+        const index = dropParent.schema.props.rows[rowIndex][colIndex].widgets.findIndex(
+          d => `${_id}/${d}` === realDropId
+        );
+        const widgetIds = dragId.split('/');
+        const widgetId = widgetIds[widgetIds.length - 1];
+        switch (_position) {
+          case 'up':
+            dropParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index, 0, widgetId);
+            break;
+          case 'down':
+            dropParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, widgetId);
+            break;
+          default:
+            // inside 作为 default 情况
+            dropParent.schema.props.rows[rowIndex][colIndex].widgets.push(widgetId);
+            break;
+        }
+        next();
+      }
+    } else {
+      next();
     }
-    dropParent.children = newChildren;
   } catch (error) {
     console.error(error);
   }
@@ -426,7 +503,7 @@ export const flattenToData = (flatten, id = '#') => {
       const { type } = flatten[id].schema;
       if (result === undefined) {
         // TODO: 这个是简化的逻辑，在编辑器模型下，list和object都是object结构
-        if (type === 'object') {
+        if (type === 'object' || type === 'object:table') {
           result = {};
         } else if (type === 'array') {
           result = [{}];
@@ -490,7 +567,7 @@ export function getChildren2(schema) {
     return [];
   }
   let schemaSubs = {};
-  if (type === 'object') {
+  if (type === 'object' || type === 'object:table') {
     schemaSubs = properties;
   }
   if (type === 'array') {
@@ -561,7 +638,7 @@ export const oldSchemaToNew = schema => {
   if (schema && schema.schema) {
     return schema.schema;
   }
-  if (schema && schema.type === 'object') {
+  if (schema && (schema.type === 'object' || schema.type === 'object:table')) {
     return schema;
   }
   return {
@@ -582,7 +659,7 @@ export const newSchemaToOld = setting => {
 export const schemaToState = value => {
   const schema = value;
   const frProps = Object.keys(schema).reduce((rst, cur) => {
-    if (['type', 'properties'].includes(cur)) return rst;
+    if (['type', 'properties', 'props'].includes(cur)) return rst;
     return { ...rst, [cur]: schema[cur] };
   }, {});
 

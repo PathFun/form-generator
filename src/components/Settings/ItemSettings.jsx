@@ -43,7 +43,9 @@ const ItemSettings = defineComponent({
           return {
             ...item,
             widget: item.widget || item.schema.widget || getWidgetName(item.schema, store.mapping),
-            setting: mergeInOrder(baseCommonSettings, commonSettings, baseItemSettings, item.setting)
+            setting: setting.useCommon
+              ? mergeInOrder(baseCommonSettings, commonSettings, baseItemSettings, item.setting)
+              : mergeInOrder(baseCommonSettings, baseItemSettings, item.setting)
           };
         });
         return [...widgetList, ...basicWidgets];
@@ -72,7 +74,7 @@ const ItemSettings = defineComponent({
 
     const widgetList = computed(() => {
       const _settings = Array.isArray(settings)
-        ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }] // TODO: 不是最优解
+        ? [...settings, { widgets: [...elements, ...advancedElements, ...layouts] }]
         : defaultSettings;
       const _commonSettings = isObject(commonSettings) ? commonSettings : defaultCommonSettings;
       return getWidgetList(_settings, _commonSettings);

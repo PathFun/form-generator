@@ -3,6 +3,7 @@ import { dataToFlatten, flattenToData } from '../../../utils';
 import { useStore } from '../../../utils/context';
 import RenderChildren from './RenderChildren';
 import RenderField from './RenderField';
+import RenderTable from './RenderTable';
 import Wrapper from './Wrapper';
 import { defineComponent } from 'vue';
 
@@ -61,7 +62,8 @@ const FR = ({ id = '#', preview, displaySchema }) => {
   const displayType = schema.displayType || frProps.displayType;
   const isObj = schema.type === 'object';
   const isList = schema.type === 'array' && schema.enum === undefined && !!schema.items;
-  const isComplex = isObj || isList;
+  const isTable = schema.type === 'object:table';
+  const isComplex = isObj || isList || isTable;
   const width = schema['width'];
   let containerClass = `fr-field w-100 ${isComplex ? 'fr-field-complex' : ''} ${schema.className || ''}`;
   let labelClass = 'fr-label mb2';
@@ -140,25 +142,33 @@ const FR = ({ id = '#', preview, displaySchema }) => {
     ) : null;
 
   const isEmpty = Object.keys(flatten).length < 2; // 只有一个根元素 # 的情况
+
   if (isEmpty) {
-    return (
+    return item.schema.type !== 'object:table' ? (
       <Wrapper style={columnStyle} _id={id} item={item}>
         <div class={`${containerClass} h-100 f4 black-40 flex items-center justify-center mb0`}>
           点击/拖拽左侧栏的组件进行添加
         </div>
       </Wrapper>
+    ) : (
+      <RenderTable {...fieldProps}></RenderTable>
     );
   }
+
   return (
     <Wrapper style={columnStyle} _id={id} item={item}>
       <div class={containerClass}>
-        <RenderField {...fieldProps}>
-          {(isObj || isList) && (
-            <Wrapper _id={id} item={item} inside>
-              {childrenElement || <div class="h2" />}
-            </Wrapper>
-          )}
-        </RenderField>
+        {isTable ? (
+          <RenderTable {...fieldProps}></RenderTable>
+        ) : (
+          <RenderField {...fieldProps}>
+            {(isObj || isList) && (
+              <Wrapper _id={id} item={item} inside>
+                {childrenElement || <div class="h2" />}
+              </Wrapper>
+            )}
+          </RenderField>
+        )}
       </div>
     </Wrapper>
   );
