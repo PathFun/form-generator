@@ -1,4 +1,4 @@
-@import "./atom.less";
+@import url("./atom.less");
 
 /*
   用于原有样式的覆盖
@@ -21,6 +21,14 @@
     overflow: hidden;
     border-right: 1px solid #e0e0e0;
     border-left: 1px solid #e0e0e0;
+
+    .ant-tabs {
+      border: 1px solid #d9d9d9;
+
+      .ant-tabs-tabpane {
+        padding: 4px;
+      }
+    }
   }
 
   .flex-center {
@@ -51,6 +59,10 @@
   .ant-tabs-tabpane.ant-tabs-tabpane-active {
     height: 100%;
     overflow-y: auto;
+  }
+
+  .ant-tabs-top > .ant-tabs-nav {
+    margin-bottom: 4px;
   }
 }
 
@@ -387,18 +399,3 @@
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
-.fr-generator-container{
-  .ant-tabs-top > .ant-tabs-nav{
-    margin-bottom: 4px;
-  }
-  .mid-layout{
-    .ant-tabs {
-      border: 1px solid #d9d9d9;
-      .ant-tabs-tabpane{
-        padding: 4px;
-      }
-    }
-  }
-
-}
-

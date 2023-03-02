@@ -1,5 +1,5 @@
 <template>
-  <Row v-bind="schema.row || {}" style="width: 100%">
+  <Row v-bind="schema.row || {}" style="width: 100%;">
     <template v-if="isDesigning">
       <Col v-for="(col, rowIdx) in (schema.rows || [])" :key="rowIdx" v-bind="col">
         <Wrapper :_id="`${_id}|${rowIdx}`" :item="{ schema }" inside>
@@ -77,10 +77,4 @@ const childrenMap = computed(() => {
 
 const slots = useSlots()
 
-console.log(slots)
-
-
 </script>
-
-<style lang="less">
-</style>
