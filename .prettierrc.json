@@ -2,7 +2,7 @@
 	"semi": true,
 	"eslintIntegration": true,
 	"singleQuote": true,
-	"endOfLine": "lf",
+	"endOfLine": "auto",
 	"tabWidth": 2,
 	"trailingComma": "none",
 	"bracketSpacing": true,

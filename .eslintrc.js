@@ -28,14 +28,15 @@ module.exports = {
   },
   plugins: ['vue', 'prettier'],
   rules: {
-    'prettier/prettier': [
-      'error',
-      {
-        semi: true,
-        singleQuote: true,
-        printWidth: 120
-      }
-    ],
+    'prettier/prettier': 'off',
+    // 'prettier/prettier': [
+    //   'error',
+    //   {
+    //     semi: true,
+    //     singleQuote: true,
+    //     printWidth: 80
+    //   }
+    // ],
     'vue/multi-word-component-names': 'off',
     'no-console': process.env.NODE_ENV === 'production' ? 1 : 0,
     'no-debugger': process.env.NODE_ENV === 'production' ? 1 : 0,

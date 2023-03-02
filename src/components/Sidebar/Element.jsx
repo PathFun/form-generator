@@ -46,7 +46,6 @@ const Element = defineComponent({
     };
 
     return () => {
-      const { elementRender } = store;
       const widgetProps = {
         text: props.text,
         icon: props.icon,
@@ -55,7 +54,7 @@ const Element = defineComponent({
 
       const originNode = <WidgetUI {...widgetProps} />;
       return (
-        <div ref={dragRef}>{elementRender ? elementRender(props.schema, widgetProps, originNode) : originNode}</div>
+        <div ref={dragRef}>{originNode}</div>
       );
     };
   }

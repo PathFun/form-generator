@@ -12,6 +12,7 @@ const Canvas = defineComponent({
   setup(props, { emit }) {
     const setGlobal = useGlobal();
     const store = useStore();
+    const { omSchemaAndDataChange } = store;
 
     const local = reactive({
       preview: false,
@@ -30,15 +31,13 @@ const Canvas = defineComponent({
     };
 
     const importSchema = () => {
-      const { onChange, onSchemaChange } = store;
       try {
         const value = transformer.from(looseJsonParse(local.schemaForImport));
         setGlobal(() => ({
           selected: undefined,
           ...schemaToState(value)
         }));
-        onChange(value.formData || {});
-        onSchemaChange(value);
+        omSchemaAndDataChange(value. value.formData || {});
       } catch (error) {
         console.error(error, 'catch');
         message.info('格式不对哦，请重新尝试'); // 可以加个格式哪里不对的提示
@@ -53,7 +52,6 @@ const Canvas = defineComponent({
     };
 
     const clearSchema = () => {
-      const { onChange, onSchemaChange } = store;
       const schema = {
         type: 'object',
         properties: {}
@@ -63,8 +61,7 @@ const Canvas = defineComponent({
         formData: {},
         selected: undefined
       });
-      onChange({});
-      onSchemaChange(schema);
+      omSchemaAndDataChange(schema, {})
     };
 
     watch(

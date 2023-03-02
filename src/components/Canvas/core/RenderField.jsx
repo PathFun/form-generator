@@ -2,6 +2,8 @@ import { defineComponent } from 'vue';
 import { getParentProps, isCssLength, isLooselyNumber, transformProps } from '../../../utils';
 import { useStore } from '../../../utils/context';
 import { getWidgetName } from '../../../utils/mapping';
+import list from '../../../widgets/list';
+import map from '../../../widgets/map';
 
 const RenderField = defineComponent({
   props: {
@@ -27,21 +29,28 @@ const RenderField = defineComponent({
 
     return () => {
       const { schema, data } = props.item;
-      const { flatten, widgets, mapping, frProps = {}, fieldRender } = store;
+      const { flatten, widgets, mapping, frProps = {} } = store;
       const { labelWidth, displayType, showValidate } = frProps;
       const { title, description, required } = schema;
 
+      const _widgets = {
+        ...widgets,
+        list,
+        map
+      };
+      
       let widgetName = getWidgetName(schema, mapping);
       const customWidget = schema['widget'];
-      if (customWidget && widgets[customWidget]) {
+      if (customWidget && _widgets[customWidget]) {
         widgetName = customWidget;
       }
-      let Widget = widgets[widgetName];
+
+      let Widget = _widgets[widgetName];
       if (!Widget) {
         const defaultSchema = { ...schema };
         delete defaultSchema['widget'];
         widgetName = getWidgetName(defaultSchema, mapping);
-        Widget = widgets[widgetName] || 'input';
+        Widget = _widgets[widgetName] || 'input';
       }
 
       const effectiveLabelWidth = getParentProps('labelWidth', props._id, flatten) || labelWidth;
@@ -49,7 +58,7 @@ const RenderField = defineComponent({
         ? Number(effectiveLabelWidth)
         : isCssLength(effectiveLabelWidth)
         ? effectiveLabelWidth
-        : '110'; // 默认是 110px 的长度
+        : '110px'; // 默认是 110px 的长度
 
       let labelStyle = { width: _labelWidth + 'px' };
       if (widgetName === 'checkbox' || props.isComplex || displayType === 'column') {
@@ -58,10 +67,9 @@ const RenderField = defineComponent({
 
       let contentStyle = {};
       if (widgetName === 'checkbox' && displayType === 'row') {
-        contentStyle.marginLeft = effectiveLabelWidth;
+        contentStyle.marginLeft = typeof effectiveLabelWidth === 'string' ? effectiveLabelWidth : `${effectiveLabelWidth}px`;
       }
 
-      // TODO: useMemo
       // 改为直接使用form-render内部自带组件后不需要再包一层options
       const usefulWidgetProps = transformProps({
         value: data || schema.default,
@@ -71,7 +79,7 @@ const RenderField = defineComponent({
         format: schema.format,
         onChange,
         schema,
-        ...schema['props']
+        componentProps: schema.props
       });
 
       const originNode = (
@@ -96,8 +104,7 @@ const RenderField = defineComponent({
           </div>
         </>
       );
-      if (!fieldRender) return originNode;
-      return fieldRender(schema, usefulWidgetProps, props.children, originNode);
+      return originNode;
     };
   }
 });

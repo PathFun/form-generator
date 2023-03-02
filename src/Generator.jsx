@@ -2,7 +2,6 @@ import Canvas from './components/Canvas';
 import Settings from './components/Settings';
 import Sidebar from './components/Sidebar';
 import Provider from './Provider';
-import './styles/index.less';
 
 const Generator = ({ fixedName, settingsWidgets, onCanvasSelect, ...rest }) => {
   return (
@@ -20,8 +19,5 @@ Generator.Provider = Provider;
 Generator.Sidebar = Sidebar;
 Generator.Canvas = Canvas;
 Generator.Settings = Settings;
-
-export { defaultCommonSettings, defaultGlobalSettings, defaultSettings } from './settings';
-export { fromSetting, toSetting } from './transformer/form-render';
 
 export default Generator;

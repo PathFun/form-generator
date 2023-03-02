@@ -19,10 +19,15 @@ const ItemSettings = defineComponent({
   },
   setup(props) {
     const setGlobal = useGlobal();
-    const form = useForm();
+    const form = useForm({
+      removeHiddenData: false,
+    });
     const store = useStore();
     const { settings, commonSettings, hideId, validation, transformer } = store.userProps;
-    const settingSchema = reactive({});
+    const settingSchema = reactive({
+      type: 'object',
+      displayType: 'column'
+    });
 
     const _widgets = {
       ...store.widgets,
@@ -101,7 +106,6 @@ const ItemSettings = defineComponent({
           const value = transformer.toSetting(item.schema);
           setTimeout(() => {
             form.setValues(value);
-            onDataChange(form.getValues());
             validation && form.submit();
           }, 0);
         } catch (error) {

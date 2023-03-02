@@ -2,7 +2,7 @@ import { ConfigProvider } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/lib/locale/zh_CN';
 import copyTOClipboard from 'copy-text-to-clipboard';
 import { defineComponent, reactive, watch } from 'vue';
-import { defaultMapping, defaultWidgets } from 'form-render-vue3';
+import { defaultMapping, defaultWidget } from 'form-render-vue3';
 import { DndProvider } from 'vue3-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { fromSetting, toSetting } from './transformer/form-render';
@@ -16,8 +16,6 @@ import {
   schemaToState
 } from './utils';
 import { Ctx, StoreCtx } from './utils/context';
-import * as frgWidgets from './widgets';
-
 const DEFAULT_SCHEMA = {
   type: 'object',
   properties: {}
@@ -26,7 +24,7 @@ const DEFAULT_SCHEMA = {
 const Provider = defineComponent({
   name: 'Provider',
   props: {
-    defaultValue: Object,
+    schema: Object,
     canDrag: {
       type: [Boolean, Function],
       default: true
@@ -53,6 +51,10 @@ const Provider = defineComponent({
       type: Object,
       default: () => ({})
     },
+    designWidgets: {
+      type: Object,
+      default: () => ({})
+    },
     mapping: {
       type: Object,
       default: () => ({})
@@ -60,10 +62,7 @@ const Provider = defineComponent({
     validation: {
       type: Boolean,
       default: true
-    },
-    fieldRender: Function,
-    fieldWrapperRender: Function,
-    elementRender: Function
+    }
   },
   components: {
     ConfigProvider,
@@ -92,15 +91,51 @@ const Provider = defineComponent({
       }, 0);
     };
 
-    const onFlattenChange = (newFlatten, changeSource = 'schema') => {
+    const changeDisplaySchema = () => {
+      const newSchema = state.schema;
+      const newFormData = state.formData;
+      let _schema = {};
+      if (newSchema) {
+        _schema = combineSchema(newSchema);
+      }
+      const flatten = { ...flattenSchema(_schema) };
+      const flattenWithData = {
+        ..._transformer.from(dataToFlatten(flatten, newFormData))
+      };
+
+      let displaySchema = {};
+      let displaySchemaString = '';
+      try {
+        const schema = {
+          ...idToSchema(flattenWithData, '#', true),
+          // ...state.frProps
+        };
+        displaySchema = _transformer.to(schema);
+        displaySchemaString = JSON.stringify(displaySchema, null, 2);
+      } catch (error) {
+        console.log(error);
+      }
+      Object.assign(store, {
+        flatten: flattenWithData,
+        displaySchema,
+        displaySchemaString
+      });
+    };
+
+    const onFlattenChange = (newFlatten, changeSource) => {
       const newSchema = idToSchema(newFlatten);
       const newData = flattenToData(newFlatten);
+      omSchemaAndDataChange(newSchema, newData, changeSource)
+    };
+
+    const omSchemaAndDataChange = (newSchema, newData, changeSource = 'schema') => {
       // 判断只有schema变化时才调用，一般需求的用户不需要
       if (changeSource === 'schema') {
         onSchemaChange(newSchema);
       }
       // schema 变化大都会触发 data 变化
       onChange(newData);
+      changeDisplaySchema();
     };
 
     const onItemChange = (key, value, changeSource) => {
@@ -136,7 +171,8 @@ const Provider = defineComponent({
 
     const getErrorFields = () => store.errorFields;
 
-    const setErrorFields = newErrorFields => Object.assign(store, { errorFields: newErrorFields });
+    const setErrorFields = newErrorFields =>
+      Object.assign(store, { errorFields: newErrorFields });
 
     const getSettingsForm = () => state.settingsForm;
 
@@ -168,6 +204,7 @@ const Provider = defineComponent({
       onFlattenChange, // onChange + onSchemaChange = onFlattenChange
       onItemChange, // onFlattenChange 里只改一个item的flatten，使用这个方法
       onSchemaChange,
+      omSchemaAndDataChange,
       onChange,
       errorFields: [],
       onItemErrorChange: setErrorFields,
@@ -175,12 +212,10 @@ const Provider = defineComponent({
       frProps: {},
       displaySchema: {},
       displaySchemaString: '',
-      fieldRender: props.fieldRender,
-      fieldWrapperRender: props.fieldWrapperRender,
-      elementRender: props.elementRender,
       preview: false,
       mapping: { ...defaultMapping, ...props.mapping },
-      widgets: { ...defaultWidgets, ...props.widgets, ...frgWidgets },
+      widgets: { ...defaultWidget, ...props.widgets },
+      designWidgets: { ...props.designWidgets },
       selected: undefined
     });
 
@@ -189,61 +224,35 @@ const Provider = defineComponent({
     StoreCtx(store);
 
     watch(
-      () => props.defaultValue,
-      newValue => {
-        const _schema = newValue ? _transformer.from(newValue) : DEFAULT_SCHEMA;
+      () => props.schema,
+      newSchema => {
+        const _schema = newSchema
+          ? _transformer.from(newSchema)
+          : DEFAULT_SCHEMA;
         if (_schema) {
           const newState = schemaToState(_schema);
           Object.assign(state, newState);
           Object.assign(store, { frProps: newState.frProps });
+          changeDisplaySchema();
         }
       },
       {
-        immediate: true
+        immediate: true,
+        deep: true
       }
     );
+
+    changeDisplaySchema();
 
     watch(
-      [() => state.schema, () => state.formData],
-      ([newSchema, newFormData]) => {
-        let _schema = {};
-        if (newSchema) {
-          _schema = combineSchema(newSchema);
-        }
-
-        const flatten = { ...flattenSchema(_schema) };
-        const flattenWithData = {
-          ..._transformer.from(dataToFlatten(flatten, newFormData))
-        };
-        let displaySchema = {};
-        let displaySchemaString = '';
-        try {
-          const schema = {
-            ...idToSchema(flattenWithData, '#', true),
-            ...state.frProps
-          };
-          displaySchema = _transformer.to(schema);
-          displaySchemaString = JSON.stringify(displaySchema, null, 2);
-        } catch (error) {
-          console.log(error);
-        }
+      [() => state.selected, () => state.preview],
+      ([selected, preview]) => {
         Object.assign(store, {
-          flatten: flattenWithData,
-          displaySchema,
-          displaySchemaString
+          selected,
+          preview
         });
-      },
-      {
-        immediate: true
       }
     );
-
-    watch([() => state.selected, () => state.preview], ([selected, preview]) => {
-      Object.assign(store, {
-        selected,
-        preview
-      });
-    });
 
     expose({
       getValue,
@@ -256,7 +265,9 @@ const Provider = defineComponent({
     return () => {
       return (
         <DndProvider backend={HTML5Backend} context={window}>
-          <ConfigProvider locale={zhCN}>{slots.default ? slots.default() : null}</ConfigProvider>
+          <ConfigProvider locale={zhCN}>
+            {slots.default ? slots.default() : null}
+          </ConfigProvider>
         </DndProvider>
       );
     };

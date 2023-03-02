@@ -35,7 +35,7 @@
     "ant-design-vue": "^3.2.10",
     "clone": "^2.1.2",
     "copy-text-to-clipboard": "^3.0.1",
-    "form-render-vue3": "^1.1.7",
+    "form-render-vue3": "^1.2.94",
     "nanoid": "^4.0.0",
     "react-dnd-html5-backend": "^16.0.1",
     "vue": "^3.2.25",
@@ -76,7 +76,7 @@
   },
   "peerDependencies": {
     "ant-design-vue": ">=3.2.3",
-    "form-render-vue3": "^1.1.7",
+    "form-render-vue3": ">=1.2.5",
     "vue": ">=3.2.0"
   },
   "lint-staged": {

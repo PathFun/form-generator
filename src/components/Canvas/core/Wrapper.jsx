@@ -6,7 +6,12 @@ import { useGlobal, useStore } from '../../../utils/context';
 import './Wrapper.less';
 
 const Wrapper = defineComponent({
-  props: ['_id', 'item', 'inside', 'style'],
+  props: {
+    _id: String,
+    item: Object,
+    inside:Boolean,
+    style: Object
+  },
   setup(props, { slots }) {
     const position = ref();
     const store = useStore();
@@ -81,12 +86,32 @@ const Wrapper = defineComponent({
       setGlobal({ selected: _id });
     };
 
+    const getAllWidgets = (rows) => {
+      let widgets = []
+      if(rows.length) {
+        rows.forEach((cols, rowIdx) => {
+          if(cols.length) {
+            cols.forEach((col, colIdx) => {
+              widgets = widgets.concat(col.widgets.map((widget, widgetIndex) => ({
+                name: widget,
+                rowIdx,
+                colIdx,
+                widgetIndex
+              })))
+            })
+          }
+        })
+      }
+      return widgets
+    }
+
     const deleteItem = async e => {
       e.stopPropagation();
       const newFlatten = { ...store.flatten };
       let newSelect = '#';
+      let parent
       try {
-        const parent = newFlatten[props._id].parent;
+        parent = newFlatten[props._id].parent;
         const siblings = newFlatten[parent].children;
         const idx = siblings.indexOf(props._id);
         if (idx > 0) {
@@ -103,6 +128,16 @@ const Wrapper = defineComponent({
       }
       if (!_canDelete) return;
       delete newFlatten[props._id];
+      const parentSchema = newFlatten[parent]?.schema;
+      if(parentSchema.widget === 'table') {
+        const widgetName = props._id.split('/')
+        const allWidgets = getAllWidgets(parentSchema.rows)
+        const widgetInTable = allWidgets.find(item => item.name === widgetName[widgetName.length - 1])
+        if(widgetInTable) {
+          const { rowIdx, colIdx,  widgetIndex} = widgetInTable
+          parentSchema.rows[rowIdx][colIdx].widgets.splice(widgetIndex, 1)
+        }
+      }
       store.onFlattenChange(newFlatten);
       setGlobal({ selected: newSelect });
     };
@@ -118,7 +153,7 @@ const Wrapper = defineComponent({
     return () => {
       const { schema } = props.item;
       const { type } = schema;
-      const { flatten, selected, fieldWrapperRender } = store;
+      const { flatten, selected } = store;
       const isActive = canDrop.value && isOver.value;
 
       let isSelected = selected === props._id && !props.inside;
@@ -135,7 +170,7 @@ const Wrapper = defineComponent({
           ...overwriteStyle,
           borderColor: '#777',
           padding: '12px 12px 0',
-          backgroundColor: '#fcfcfc'
+          backgroundColor: '#f6f5f6',
         };
       } else if (props._id === '#') {
         overwriteStyle = {
@@ -211,12 +246,14 @@ const Wrapper = defineComponent({
         >
           {slots.default ? slots.default() : null}
 
-          <div class="absolute top-0 right-1 f7">
+          {
+            type !== 'layout' ? <div class="absolute top-0 right-1 f7">
             {!props.inside && props._id !== '#' && !hideId && (
               <span class={hasDuplicateId ? 'red' : 'blue'}>{shownId} </span>
             )}
             {schema.hidden && <span style={{ color: '#666', marginLeft: '6px' }}>[hidden]</span>}
-          </div>
+          </div> : null
+          }
 
           {!props.inside && props._id !== '#' && isSelected && (
             <div class="pointer-move" ref={dragRef}>
@@ -249,8 +286,7 @@ const Wrapper = defineComponent({
         </div>
       );
 
-      if (!fieldWrapperRender) return originNode;
-      return fieldWrapperRender(schema, isSelected, slots.default ? slots.default() : null, originNode);
+      return originNode;
     };
   }
 });

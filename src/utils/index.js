@@ -25,6 +25,7 @@ export function isCssLength(str) {
 export function isDeepEqual(param1, param2) {
   if (param1 === undefined && param2 === undefined) return true;
   else if (param1 === undefined || param2 === undefined) return false;
+
   if (param1 === null && param2 === null) return true;
   else if (param1 === null || param2 === null) return false;
   else if (param1.constructor !== param2.constructor) return false;
@@ -62,7 +63,7 @@ export function combineSchema(propsSchema = {}, uiSchema = {}) {
   const newList = propList.map(p => {
     const { name } = p;
     const { type, enum: options, properties, items } = p.schema;
-    const isObj = (type === 'object' || type === 'object:table') && properties;
+    const isObj = type === 'object' && properties;
     const isArr = type === 'array' && items && !options; // enum + array 代表的多选框，没有sub
     const ui = name && uiSchema[p.name];
     if (!ui) {
@@ -116,7 +117,7 @@ function getChildren(schema) {
     return [];
   }
   let schemaSubs = {};
-  if (type === 'object' || type === 'object:table') {
+  if (type === 'object') {
     schemaSubs = properties;
   }
   if (type === 'array') {
@@ -174,9 +175,10 @@ export function flattenSchema(schema, name = '#', parent, result = {}) {
     _schema._id = name; // 给生成的schema添加一个唯一标识，方便从schema中直接读取
   }
   const children = [];
-  const isObj = !!((_schema.type === 'object' || _schema.type === 'object:table') && _schema.properties);
+  const isObj = !!(_schema.type === 'object' && _schema.properties);
   const isList = _schema.type === 'array' && _schema.items && _schema.items.properties;
-  if (isObj) {
+  const isLayout = !!(_schema.type === 'layout' && _schema.properties);
+  if (isObj || isLayout) {
     Object.entries(_schema.properties).forEach(([key, value]) => {
       const uniqueName = name + '/' + key;
       children.push(uniqueName);
@@ -241,7 +243,7 @@ export function idToSchema(flatten, id = '#', final = false) {
           console.error(error, 'catch');
         }
         const key = getKeyFromUniqueId(childId);
-        if (schema.type === 'object' || schema.type === 'object:table') {
+        if (schema.type === 'object' || schema.type === 'layout') {
           if (!schema.properties) {
             schema.properties = {};
           }
@@ -255,7 +257,7 @@ export function idToSchema(flatten, id = '#', final = false) {
         }
       });
     } else {
-      if ((schema.type === 'object' || schema.type === 'object:table') && !schema.properties) {
+      if ((schema.type === 'object' || schema.type === 'layout') && !schema.properties) {
         schema.properties = {};
       }
       if (schema.type === 'array' && schema.items && schema.items.type === 'object' && !schema.items.properties) {
@@ -266,7 +268,7 @@ export function idToSchema(flatten, id = '#', final = false) {
   return schema;
 }
 
-export function getRowsIndexs(rows = [], parentId, id) {
+export function getRowColIndexs(rows = [], parentId, id) {
   for (let i = 0; i < rows.length; i++) {
     if (rows[i].length) {
       for (let j = 0; j < rows[i].length; j++) {
@@ -276,6 +278,18 @@ export function getRowsIndexs(rows = [], parentId, id) {
             return [i, j, index];
           }
         }
+      }
+    }
+  }
+  return [];
+}
+
+export function getRowIndexs(rows = [], parentId, id) {
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].widgets && rows[i].widgets.length) {
+      const index = rows[i].widgets.findIndex(d => `${parentId}/${d}` === id);
+      if (index > -1) {
+        return [i, index];
       }
     }
   }
@@ -292,12 +306,12 @@ export const copyItem = (flatten, id, getId) => {
     siblings.splice(idx + 1, 0, newId);
     newFlatten[newId] = deepClone(newFlatten[id]);
     newFlatten[newId].schema._id = newId;
-    if (newFlatten[item.parent].schema.type === 'object:table') {
-      const { props = {}, _id } = newFlatten[item.parent].schema;
-      const cellItem = props.rows || [];
-      const [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, id);
+    if (newFlatten[item.parent].schema.widget === 'table') {
+      const { _id, rows } = newFlatten[item.parent].schema;
+      const cellItem = rows || [];
+      const [rowIndex, colIndex, index] = getRowColIndexs(cellItem, _id, id);
       const subIds = newId.split('/');
-      props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, subIds[subIds.length - 1]);
+      rows[rowIndex][colIndex].widgets.splice(index + 1, 0, subIds[subIds.length - 1]);
     }
     return [newFlatten, newId];
   } catch (error) {
@@ -349,14 +363,14 @@ export const addItem = ({ selected, name, schema, flatten, fixedName, getId }) =
     const siblings = newFlatten[item.parent].children;
     const idx = siblings.findIndex(x => x === selected);
     siblings.splice(idx + 1, 0, newId);
-    if (newFlatten[item.parent].schema.type === 'object:table') {
-      const { props = {}, _id } = newFlatten[item.parent].schema;
-      const cellItem = props.rows || [];
-      let [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, selected);
+    if (newFlatten[item.parent].schema.widget === 'table') {
+      const { rows, _id } = newFlatten[item.parent].schema;
+      const cellItem = rows || [];
+      let [rowIndex, colIndex, index] = getRowColIndexs(cellItem, _id, selected);
       if (rowIndex === undefined) {
-        props.rows[0][0].widgets.push(_name);
+        rows[0][0].widgets.push(_name);
       } else {
-        props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, _name);
+        rows[rowIndex][colIndex].widgets.splice(index + 1, 0, _name);
       }
     }
     const newItem = {
@@ -408,13 +422,22 @@ export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
     if (idx > -1 && !dragItem) {
       dragParent.children.splice(idx, 1);
     }
-    /******* table的判断 ******/
-    const { props = {}, type } = dragParent.schema;
-    if (type === 'object:table' && props.rows && props.rows.length) {
-      const { props = {}, _id } = dragParent.schema;
-      const cellItem = props.rows;
-      const [rowIndex, colIndex, index] = getRowsIndexs(cellItem, _id, dragId);
-      if (rowIndex !== undefined) dragParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index, 1);
+    /******* table的判断(二维) ******/
+    const { rows, widget, type } = dragParent.schema;
+    if (widget === 'table' && rows && rows.length) {
+      const { _id } = dragParent.schema;
+      const cellItem = rows;
+      const [rowIndex, colIndex, index] = getRowColIndexs(cellItem, _id, dragId);
+      if (rowIndex !== undefined) dragParent.schema.rows[rowIndex][colIndex].widgets.splice(index, 1);
+    }
+    /******* end *********/
+
+    /******* layout的判断(一维) ******/
+    if (type === 'layout' && rows && rows.length) {
+      const { _id } = dragParent.schema;
+      const cellItem = rows;
+      const [rowIndex, index] = getRowIndexs(cellItem, _id, dragId);
+      if (rowIndex !== undefined) dragParent.schema.rows[rowIndex].widgets.splice(index, 1);
     }
     /******* end *********/
   } catch (error) {
@@ -441,30 +464,49 @@ export const dropItem = ({ dragId, dragItem, dropId, position, flatten }) => {
       dropParent.children = newChildren;
     };
     /******* table的判断 ******/
-    const { props = {}, type } = dropParent.schema;
-    if (type === 'object:table' && props.rows && props.rows.length) {
-      const { _id, props = {} } = dropParent.schema;
+    const { rows, widget, type } = dropParent.schema;
+    if (widget === 'table' && rows && rows.length) {
+      const { _id } = dropParent.schema;
       let [rowIndex, colIndex] = [dropIds[1], dropIds[2]];
       if (rowIndex === undefined || colIndex === undefined) {
-        const cellItem = props.rows;
-        [rowIndex, colIndex] = getRowsIndexs(cellItem, _id, dropId);
+        [rowIndex, colIndex] = getRowColIndexs(rows, _id, dropId);
       }
       if (rowIndex !== undefined) {
-        const index = dropParent.schema.props.rows[rowIndex][colIndex].widgets.findIndex(
-          d => `${_id}/${d}` === realDropId
-        );
+        const index = dropParent.schema.rows[rowIndex][colIndex].widgets.findIndex(d => `${_id}/${d}` === realDropId);
         const widgetIds = dragId.split('/');
         const widgetId = widgetIds[widgetIds.length - 1];
         switch (_position) {
           case 'up':
-            dropParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index, 0, widgetId);
+            dropParent.schema.rows[rowIndex][colIndex].widgets.splice(index, 0, widgetId);
             break;
           case 'down':
-            dropParent.schema.props.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, widgetId);
+            dropParent.schema.rows[rowIndex][colIndex].widgets.splice(index + 1, 0, widgetId);
             break;
           default:
-            // inside 作为 default 情况
-            dropParent.schema.props.rows[rowIndex][colIndex].widgets.push(widgetId);
+            dropParent.schema.rows[rowIndex][colIndex].widgets.push(widgetId);
+            break;
+        }
+        next();
+      }
+    } else if (type === 'layout' && rows && rows.length) {
+      let rowIndex = dropIds[1];
+      const { _id } = dropParent.schema;
+      if (rowIndex === undefined) {
+        [rowIndex] = getRowIndexs(rows, _id, dropId);
+      }
+      if (rowIndex !== undefined) {
+        const index = dropParent.schema.rows[rowIndex].widgets.findIndex(d => `${_id}/${d}` === realDropId);
+        const widgetIds = dragId.split('/');
+        const widgetId = widgetIds[widgetIds.length - 1];
+        switch (_position) {
+          case 'up':
+            dropParent.schema.rows[rowIndex].widgets.splice(index, 0, widgetId);
+            break;
+          case 'down':
+            dropParent.schema.rows[rowIndex].widgets.splice(index + 1, 0, widgetId);
+            break;
+          default:
+            dropParent.schema.rows[rowIndex].widgets.push(widgetId);
             break;
         }
         next();
@@ -503,7 +545,7 @@ export const flattenToData = (flatten, id = '#') => {
       const { type } = flatten[id].schema;
       if (result === undefined) {
         // TODO: 这个是简化的逻辑，在编辑器模型下，list和object都是object结构
-        if (type === 'object' || type === 'object:table') {
+        if (type === 'object') {
           result = {};
         } else if (type === 'array') {
           result = [{}];
@@ -567,7 +609,7 @@ export function getChildren2(schema) {
     return [];
   }
   let schemaSubs = {};
-  if (type === 'object' || type === 'object:table') {
+  if (type === 'object') {
     schemaSubs = properties;
   }
   if (type === 'array') {
@@ -638,7 +680,7 @@ export const oldSchemaToNew = schema => {
   if (schema && schema.schema) {
     return schema.schema;
   }
-  if (schema && (schema.type === 'object' || schema.type === 'object:table')) {
+  if (schema && schema.type === 'object') {
     return schema;
   }
   return {
@@ -678,8 +720,8 @@ export function defaultGetValueFromEvent(valuePropName, ...args) {
   return event;
 }
 
-export const transformProps = props => {
-  const { onChange, value, defaultValue, schema: ownSchema, ...rest } = props;
+export function transformProps(props) {
+  const { onChange, value, defaultValue, schema: ownSchema, readOnly, ...rest } = props;
   const schema = { ...ownSchema };
   const { trigger, valuePropName } = schema || {};
   const controlProps = {};
@@ -696,6 +738,7 @@ export const transformProps = props => {
     onChange(newValue);
   };
   if (trigger && typeof trigger === 'string') {
+    controlProps.onChange = _onChange;
     controlProps[trigger] = _onChange;
   } else {
     controlProps.onChange = _onChange;
@@ -703,9 +746,8 @@ export const transformProps = props => {
 
   const usefulPropsFromSchema = {
     disabled: schema.disabled,
-    readOnly: schema.readOnly
-    // hidden: schema.hidden,
-    // $options: schema.options,
+    readOnly: schema.readOnly || readOnly,
+    hidden: schema.hidden
   };
 
   const _props = {
@@ -716,7 +758,7 @@ export const transformProps = props => {
   };
 
   return _props;
-};
+}
 
 export const mergeInOrder = (...args) => {
   return args.reduce((result, current) => {

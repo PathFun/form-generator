@@ -20,7 +20,7 @@ import './RenderTable.less';
 
 const widgetBtns = (store, schema, _id, rowIdx, colIdx) => {
   const newFlatten = { ...store.flatten };
-  const rows = newFlatten[_id].schema.props.rows;
+  const rows = newFlatten[_id].schema.rows;
   const colOption = rows[rowIdx][colIdx];
   const dropdownClick = e => e.stopPropagation();
 
@@ -97,8 +97,8 @@ const widgetBtns = (store, schema, _id, rowIdx, colIdx) => {
       </div>
       <div class="pointer-wrapper">
         {(() => {
-          switch (schema.type) {
-            case 'object:table':
+          switch (schema.widget) {
+            case 'table':
               return (
                 <div class="pointer">
                   <Dropdown
@@ -247,12 +247,13 @@ const RenderTable = defineComponent({
       if (props.isComplex || displayType === 'column') {
         labelStyle = { flexGrow: 1 };
       }
-
+      
       let contentStyle = {};
       if (displayType === 'row') {
         contentStyle.marginLeft = effectiveLabelWidth;
       }
       const sProps = schema.props || {};
+      const { rows } = schema;
       return (
         <>
           {schema.title ? (
@@ -273,7 +274,7 @@ const RenderTable = defineComponent({
           <div class={props.contentClass} style={contentStyle}>
             <table class={`table-layout ${sProps.customClass}`} border={sProps.border}>
               <tbody>
-                {(sProps.rows || []).map((cols, rowIdx) => (
+                {(rows || []).map((cols, rowIdx) => (
                   <tr>
                     {cols && cols.length
                       ? cols.map((col, colIdx) =>
@@ -283,7 +284,6 @@ const RenderTable = defineComponent({
                                 _id={`${props._id}|${rowIdx}|${colIdx}`}
                                 item={props.item}
                                 inside
-                                isTable
                                 style={{ padding: '6px', border: 'none' }}
                                 v-slots={{
                                   default: () => {

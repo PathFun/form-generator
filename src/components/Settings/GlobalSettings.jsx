@@ -9,14 +9,12 @@ const GlobalSettings = defineComponent({
   },
   setup(props) {
     const form = useForm({
-      removeHiddenData: false,
-      formData: {}
+      removeHiddenData: false
     });
     const innerUpdate = ref(false);
     const store = useStore();
     const setGlobal = useGlobal();
     const globalSettings = store.userProps?.globalSettings || defaultGlobalSettings;
-
     const onDataChange = value => {
       innerUpdate.value = !!Object.keys(value).length;
       setGlobal({ frProps: value });
