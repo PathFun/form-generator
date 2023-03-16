@@ -34,8 +34,8 @@ const ItemSettings = defineComponent({
       ...frgWidgets
     };
 
-    const getWidgetList = (settings, commonSettings) => {
-      return settings.reduce((widgetList, setting) => {
+    const getWidgetList = (_settings, commonSettings) => {
+      return _settings.reduce((widgetList, setting) => {
         if (!Array.isArray(setting.widgets)) return widgetList;
         const basicWidgets = setting.widgets.map(item => {
           const baseItemSettings = {};

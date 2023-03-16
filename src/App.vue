@@ -280,7 +280,7 @@ const changeTheme = () => {
   <Generator
     :schema="schema"
     :design-widgets="designWidgets"
-    :setting="settings"
+    :settings="settings"
     :widgets="{ divider: Divider, alert: Alert, layoutTable: Table, grid: Grid }"
     :extra-buttons="[{ text: `根主题(对象或表格)`, onclick: changeTheme }]"
   />

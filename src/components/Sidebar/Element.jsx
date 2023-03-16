@@ -6,6 +6,7 @@ import './Element.less';
 
 const Element = defineComponent({
   props: ['text', 'name', 'schema', 'icon', 'fixedName'],
+  inheritAttrs: false,
   setup(props) {
     const setGlobal = useGlobal();
     const store = useStore();

@@ -2,6 +2,8 @@ import { defineComponent } from 'vue';
 import { getWidgetName } from '../../../utils/mapping';
 import { useStore } from '../../../utils/context';
 import { transformProps } from '../../../utils/'
+import Wrapper from './Wrapper';
+import RenderChildren from './RenderChildren';
 
 const RenderLayout = defineComponent({
   props: {
@@ -44,7 +46,23 @@ const RenderLayout = defineComponent({
         componentProps: schema.props,
         isDesigning: true
       });
-      return Widget ? <Widget {...usefulWidgetProps} /> : <div>notFound design widget</div>;
+      return Widget ? <Widget {...usefulWidgetProps} v-slots={{
+        wrapper: ({
+          _id = '',
+          item = {},
+          inside = false,
+          style = {},
+          _children= []
+        }) => <Wrapper _id={_id} item = {item} inside={inside} style={style}>
+           {_children.length ? (
+              <ul class={`flex flex-wrap pl0`}>
+              <RenderChildren _children={_children} />
+              </ul>
+            ) : (
+              <div class="h2" />
+            )}
+        </Wrapper>,
+      }}></Widget> : <div>notFound design widget</div>;
     };
   }
 });

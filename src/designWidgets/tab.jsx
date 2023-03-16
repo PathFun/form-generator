@@ -7,14 +7,15 @@ export default defineComponent({
     _id: String,
     item: Object,
   },
-  setup(props) {
+  setup(props, { slots }) {
     return () => {
-      const { item = {} } = props;
+      const { item = {}, _id } = props;
       const { schema = {} } = item
       const attrs = schema.props || {};
       const { rows = [] } = schema
       const { title = schema.title, ...rest } = attrs
       rest.style = { ...(attrs.style || {}), width: '100%' }
+      const Wrapper = slots.wrapper
       return (
         <Tabs {...rest}>
           {{
@@ -28,16 +29,11 @@ export default defineComponent({
                 return (
                   <TabPane {...paneRest} key={rowIdx}>
                     <Wrapper
-                        _id={`${props._id}|${rowIdx}`}
-                        item={props.item}
-                        inside>
-                        {
-                          widgets.length ?
-                          <ul class={`flex flex-wrap pl0`}>
-                            <RenderChildren _children={widgets.map(d => `${props._id}/${d}`)} />
-                          </ul> :
-                          <div class="h2" />
-                        }
+                        _id={`${_id}|${rowIdx}`}
+                        item={item}
+                        inside={true}
+                        _children={widgets.map(d => `${_id}/${d}`)}
+                        >
                       </Wrapper>  
                   </TabPane>
                 );

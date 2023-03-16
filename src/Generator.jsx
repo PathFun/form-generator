@@ -3,7 +3,7 @@ import Settings from './components/Settings';
 import Sidebar from './components/Sidebar';
 import Provider from './Provider';
 
-const Generator = ({ fixedName, settingsWidgets, onCanvasSelect, ...rest }) => {
+const Generator = ({ fixedName = '', settingsWidgets = {}, onCanvasSelect = undefined, ...rest }) => {
   return (
     <Provider {...rest}>
       <div class="fr-generator-container">
