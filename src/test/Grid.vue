@@ -2,12 +2,7 @@
   <Row v-bind="schema.row || {}" style="width: 100%;">
     <template v-if="isDesigning">
       <Col v-for="(col, rowIdx) in (schema.rows || [])" :key="rowIdx" v-bind="col">
-        <Wrapper :_id="`${_id}|${rowIdx}`" :item="{ schema }" inside>
-          <ul v-if="col.widgets && col.widgets.length" class="flex flex-wrap pl0">
-            <RenderChildren :_children="col.widgets.map(d => `${_id}/${d}`)" />
-          </ul>
-          <div v-else class="h2" />
-        </Wrapper>  
+        <slots.wrapper :_id="`${_id}|${rowIdx}`" :item="{schema}" inside  :_children="col.widgets.map(d => `${_id}/${d}`)"/> 
     </Col>
     </template>
     <template v-else>
@@ -28,10 +23,6 @@
 <script setup>
 import { computed, useSlots } from 'vue';
 import { Row, Col } from 'ant-design-vue';
-import {
-  Wrapper,
-  RenderChildren
-} from '../index'
 
 const props = defineProps({
   schema: {
@@ -76,5 +67,7 @@ const childrenMap = computed(() => {
 })
 
 const slots = useSlots()
+
+console.log(props.schema, slots)
 
 </script>

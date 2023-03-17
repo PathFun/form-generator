@@ -90,15 +90,26 @@ const Wrapper = defineComponent({
       let widgets = []
       if(rows.length) {
         rows.forEach((cols, rowIdx) => {
-          if(cols.length) {
-            cols.forEach((col, colIdx) => {
-              widgets = widgets.concat(col.widgets.map((widget, widgetIndex) => ({
-                name: widget,
-                rowIdx,
-                colIdx,
-                widgetIndex
-              })))
-            })
+          if(Array.isArray(cols)) {
+            // 多维
+            if(cols.length) {
+              cols.forEach((col, colIdx) => {
+                widgets = widgets.concat(col.widgets.map((widget, widgetIndex) => ({
+                  name: widget,
+                  rowIdx,
+                  colIdx,
+                  widgetIndex
+                })))
+              })
+            }
+          } else if (cols.widgets && Array.isArray(cols.widgets)) {
+            // 二维
+            widgets = widgets.concat(cols.widgets.map((widget, widgetIndex) => ({
+              name: widget,
+              rowIdx,
+              colIdx: false,
+              widgetIndex
+            })))
           }
         })
       }
@@ -129,13 +140,19 @@ const Wrapper = defineComponent({
       if (!_canDelete) return;
       delete newFlatten[props._id];
       const parentSchema = newFlatten[parent]?.schema;
-      if(parentSchema.widget === 'table') {
-        const widgetName = props._id.split('/')
+
+      if(parentSchema.rows && Array.isArray(parentSchema.rows)) {
+        const widgetNames = props._id.split('/')
+        const widgetName = widgetNames[widgetNames.length - 1]
         const allWidgets = getAllWidgets(parentSchema.rows)
-        const widgetInTable = allWidgets.find(item => item.name === widgetName[widgetName.length - 1])
+        const widgetInTable = allWidgets.find(item => item.name === widgetName)
         if(widgetInTable) {
           const { rowIdx, colIdx,  widgetIndex} = widgetInTable
-          parentSchema.rows[rowIdx][colIdx].widgets.splice(widgetIndex, 1)
+          if(colIdx) {
+            parentSchema.rows[rowIdx][colIdx].widgets.splice(widgetIndex, 1) 
+          } else {
+            parentSchema.rows[rowIdx].widgets.splice(widgetIndex, 1) 
+          }
         }
       }
       store.onFlattenChange(newFlatten);
