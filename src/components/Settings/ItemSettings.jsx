@@ -19,6 +19,7 @@ const ItemSettings = defineComponent({
   },
   setup(props) {
     const setGlobal = useGlobal();
+
     const form = useForm({
       removeHiddenData: false,
     });
@@ -55,26 +56,6 @@ const ItemSettings = defineComponent({
         });
         return [...widgetList, ...basicWidgets];
       }, []);
-    };
-
-    const onDataChange = value => {
-      const { selected, flatten, onItemChange } = store;
-      try {
-        const item = flatten[selected];
-        if (!item || selected === '#') return;
-        if (item && item.schema) {
-          onItemChange(
-            selected,
-            {
-              ...item,
-              schema: transformer.fromSetting(value)
-            },
-            'schema'
-          );
-        }
-      } catch (error) {
-        console.error(error, 'catch');
-      }
     };
 
     const widgetList = computed(() => {
@@ -121,8 +102,31 @@ const ItemSettings = defineComponent({
       newValidation && store.onItemErrorChange(newErrorFields);
     });
 
+    const onDataChange = value => {
+      const { selected, flatten, onItemChange } = store;
+      try {
+        const item = flatten[selected];
+        if (!item || selected === '#') return;
+        if (item && item.schema) {
+          onItemChange(
+            selected,
+            {
+              ...item,
+              schema: transformer.fromSetting(value)
+            },
+            'schema'
+          );
+        }
+      } catch (error) {
+        console.error(error, 'catch');
+      }
+    };
+
     onMounted(() => {
       setGlobal({ settingsForm: form });
+      watch(() => form.formData, onDataChange, {
+        deep: true
+      })
     });
 
     return () => {
@@ -133,9 +137,6 @@ const ItemSettings = defineComponent({
             schema={settingSchema}
             widgets={{ ..._widgets, ...props.widgets }}
             mapping={store.mapping}
-            watchMap={{
-              '#': v => onDataChange(v)
-            }}
           />
         </div>
       );
